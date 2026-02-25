@@ -20,8 +20,8 @@ class Track:
     """
     
     def __init__(self, length: float, width: float, curvature: float, 
-                 num_z_points: int = 100, num_x_points: int = 50,
-                 device: str = 'cpu', dtype: torch.dtype = torch.float32):
+                num_z_points: int = 100, num_x_points: int = 50,
+                device: str = 'cpu', dtype: torch.dtype = torch.float32):
         """
         Initialize the Track model.
         
@@ -49,12 +49,12 @@ class Track:
         """Generate the track surface points as PyTorch tensors."""
         # Create parametric z coordinates (along the track length)
         z_coords = torch.linspace(0, self.length, self.num_z_points, 
-                                  device=self.device, dtype=self.dtype)
+                                device=self.device, dtype=self.dtype)
         
         # Create parametric x coordinates (across the track width)
         # Centered at x=0, ranging from -width/2 to +width/2
         x_coords = torch.linspace(-self.width / 2, self.width / 2, self.num_x_points,
-                                  device=self.device, dtype=self.dtype)
+                                device=self.device, dtype=self.dtype)
         
         # Apply curvature: x' = x + offset based on z position
         # For a circular arc with radius R, the x offset is: R - sqrt(R^2 - z^2)
@@ -90,7 +90,6 @@ class Track:
     def get_track_edges(self):
         """
         Get the left and right edges of the track.
-        
         Returns:
             left_edge: Tensor of shape (num_z_points, 3) - left edge points
             right_edge: Tensor of shape (num_z_points, 3) - right edge points
@@ -126,10 +125,9 @@ class Track:
         return center_line
     
     def update_parameters(self, length: float = None, width: float = None, 
-                         curvature: float = None):
+                        curvature: float = None):
         """
         Update track parameters and regenerate geometry.
-        
         Args:
             length: New track length (if None, keeps current value)
             width: New track width (if None, keeps current value)

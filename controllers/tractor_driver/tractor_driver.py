@@ -1,13 +1,12 @@
 from controller import Robot
 import numpy as np
 import cv2 as cv
-#import matplotlib.pyplot as plt
 import torch
-from active_inference import ActiveInference, VoxelActiveInference, ActiveInferenceNav
+from active_inference import ActiveInferenceNav
 import open3d as o3d 
 from visualizer import Visualizer
 from track import Track
-
+import time
 
 def get_pcd(rgb_cam, depth_cam, height: int, width: int, focal_length, cx, cy):
     """Get point cloud from RGB and depth camera."""
@@ -98,34 +97,33 @@ def main():
     BASE_SPEED = 2.0 # 4.0
     KP = 2.5 # 3.5
     STEER_SENSITIVITY = 40.0 # 
-
     #? Active inference object
-    #act_inf = ActiveInference(target_state=0.0,
-    #                        internal_belief=0.0,
-    #                        learning_rate=0.1,
-    #                        action_precision=0.5)
-    #act_inf = VoxelActiveInference(voxel_size=0.05, num_actions=3)
     voxel_size = 0.05 # 0.03
     nav = ActiveInferenceNav(row_width=1, voxel_size=voxel_size)
-    track = Track(length=10.0, width=1.0, curvature=0.0, num_x_points=100, num_z_points=200)
+    track = Track(length=10.0, width=2.5, curvature=0.15, num_x_points=100, num_z_points=200)
     visualizer = Visualizer()
-    #prior_visual = create_prior_visualization(row_width=1, length=3, height=0.1)
-    #prior_map_poinst = create_prior_row_map(length=10.0, width=1.0, step=10)
-    #prior_pcd = o3d.geometry.PointCloud()
-    #prior_pcd.points = o3d.utility.Vector3dVector(prior_map_poinst)
-    #prior_pcd.paint_uniform_color([1, 0.7, 0]) # orange
-
+    
+    # Create and add track geometry to visualizer
+    track_mesh = Visualizer.create_track_geometry(track)
+    visualizer.add_geometry(track_mesh, is_track=True)
+    
+    # Set initial camera view for better visualization
+    visualizer.reset_view()
+    ctr = visualizer.get_view_control()
+    ctr.set_front([0, -1, -1])
+    ctr.set_lookat([5, 0, 5])
+    ctr.set_up([0, -1, 0])
+    ctr.set_zoom(0.7)
     #? 4. Main Simulation Loop
     while robot.step(timestep) != -1:
         # Logic can be added here (e.g., stop after 10 seconds)
         ranges = lidar.getRangeImage()
-        num_pts = len(ranges)
         # check a 30-degree slice in the front center
         front_arc = ranges[int(len(ranges)*0.45) : int(len(ranges) *0.55)]
         min_dist_front = min(front_arc)
         
         #? point cloud generation
-        pcd = get_pcd(rgb_cam=cam,
+        """pcd = get_pcd(rgb_cam=cam,
                     depth_cam=depth_cam,
                     height=height, width=width,
                     focal_length=focal_length, cx=cx, cy=cy)
@@ -140,8 +138,7 @@ def main():
         crop_cloud = pcd.select_by_index(inliers, invert=True)
         ground_cloud.paint_uniform_color([0.5, 0.5, 0.5])
         #? point cloud visualization
-        voxels = o3d.geometry.VoxelGrid.create_from_point_cloud(crop_cloud, voxel_size)
-        #steering = act_inf.select_action(voxels)
+        voxels = o3d.geometry.VoxelGrid.create_from_point_cloud(crop_cloud, voxel_size)"""
         #steering, belief_dist = nav.select_action(voxels, prior)
         speed_l = 0.0 #BASE_SPEED + (steering * 2.0)
         speed_r = 0.0 #BASE_SPEED - (steering * 2.0)
@@ -152,20 +149,17 @@ def main():
             speed_r = 0.0
         
         #o3d.visualization.draw_geometries([crop_cloud, ground_cloud], window_name="Agriculture point cloud")
-        visualizer.update_visualization(voxels)
+        # Update visualization - events are processed at the start of update_visualization
+        # This preserves camera state and allows mouse interaction
+        visualizer.update_visualization(geometry=[], voxels=[])
         # apply control to motors
         # Motor indices: 0=FL, 1=FR, 2=RL, 3=RR
         motors[0].setVelocity(speed_l) # Front Left max(min(speed_l, 10), -10)
         motors[2].setVelocity(speed_l) # Rear Left max(min(speed_l, 10), -10)
         motors[1].setVelocity(speed_r) # Front Right max(min(speed_r, 10), -10)
         motors[3].setVelocity(speed_r) # Rear Right max(min(speed_r, 10), -10)
-        
-        ##
-        #cv.imshow("yolo", frame)
-        #cv.imshow("mask", hsv)
-        #cv.imwrite("frame_2.jpg",frame)
-
+        #time.sleep(0.1)  # Sleep to simulate control loop timing (adjust as needed)
 
 if __name__ == '__main__':
     main()
-    #cv.waitKey(1)
+    
