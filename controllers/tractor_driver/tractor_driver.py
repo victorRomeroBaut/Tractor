@@ -5,8 +5,44 @@ import cv2 as cv
 import torch
 from active_inference import ActiveInference, VoxelActiveInference, ActiveInferenceNav
 import open3d as o3d 
-from utils import get_pcd, get_voxel, create_prior_visualization, get_aligned_prior
+from visualizer import Visualizer
 from track import Track
+
+
+def get_pcd(rgb_cam, depth_cam, height: int, width: int, focal_length, cx, cy):
+    """Get point cloud from RGB and depth camera."""
+    depth_data = depth_cam.getRangeImage()
+    depth_image = np.array(depth_data).reshape((height, width))
+    img_buffer = rgb_cam.getImage()
+    
+    if not img_buffer:
+        return None 
+    
+    # rgb
+    rgb_img = np.frombuffer(img_buffer, np.uint8).reshape((height, width, 4))
+    rgb_img = rgb_img[:, :, :3][:, :, ::-1] / 255.0
+    
+    # invalid too close of far points
+    mask = (depth_image > depth_cam.getMinRange()) & (depth_image < depth_cam.getMaxRange())
+    # point cloud
+    u, v = np.meshgrid(np.arange(width), np.arange(height))
+    # apply mask
+    z = np.where(mask, depth_image, 0)
+    x = (u - cx) * z / focal_length
+    y = (v - cy) * z / focal_length
+    
+    points = np.stack((x, y, z), axis=-1).reshape(-1, 3)
+    colors = rgb_img.reshape(-1, 3)
+    
+    valid_index = mask.flatten()
+    points = points[valid_index]
+    colors = colors[valid_index]
+    
+    # open3D object
+    pcd = o3d.geometry.PointCloud()
+    pcd.points = o3d.utility.Vector3dVector(points)
+    pcd.colors = o3d.utility.Vector3dVector(colors)
+    return pcd
 
 
 def main():
@@ -72,8 +108,7 @@ def main():
     voxel_size = 0.05 # 0.03
     nav = ActiveInferenceNav(row_width=1, voxel_size=voxel_size)
     track = Track(length=10.0, width=1.0, curvature=0.0, num_x_points=100, num_z_points=200)
-    vis = o3d.visualization.Visualizer()
-    vis.create_window()
+    visualizer = Visualizer()
     #prior_visual = create_prior_visualization(row_width=1, length=3, height=0.1)
     #prior_map_poinst = create_prior_row_map(length=10.0, width=1.0, step=10)
     #prior_pcd = o3d.geometry.PointCloud()
@@ -117,13 +152,7 @@ def main():
             speed_r = 0.0
         
         #o3d.visualization.draw_geometries([crop_cloud, ground_cloud], window_name="Agriculture point cloud")
-        vis.clear_geometries()
-        vis.add_geometry(voxels)
-        #vis.update_geometry(prior_pcd)
-        #vis.update_geometry(voxels)
-        #vis.add_geometry(prior) # _visual
-        vis.poll_events()
-        vis.update_renderer()
+        visualizer.update_visualization(voxels)
         # apply control to motors
         # Motor indices: 0=FL, 1=FR, 2=RL, 3=RR
         motors[0].setVelocity(speed_l) # Front Left max(min(speed_l, 10), -10)
