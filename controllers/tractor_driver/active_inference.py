@@ -208,4 +208,3 @@ class ActiveInferenceNav:
         best_action = self.actions[np.argmax(beliefs)]
         print(f"best: {best_action}")
         return best_action, beliefs
-

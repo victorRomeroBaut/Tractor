@@ -19,7 +19,7 @@ class Visualizer:
         self._current_voxels = None
     
     @staticmethod
-    def get_voxel(rgb_cam, depth_cam, height: int, width: int, focal_length, cx, cy):
+    def get_voxel(rgb_cam, depth_cam, height: int, width: int, focal_length):
         """Get voxel grid from RGB and depth camera."""
         intrinsics = o3d.camera.PinholeCameraIntrinsic(width, height, focal_length, focal_length, width/2, height/2)
         depth_data = depth_cam.getRangeImage()  # list of floats
@@ -119,14 +119,13 @@ class Visualizer:
         v = np.cross(up_vector, terrain_normal)
         ssc = np.array([[0, -v[2], v[1]], [v[2], 0, -v[0]], [-v[1], v[0], 0]])
         rotation_matrix = np.eye(3) + ssc + np.matmul(ssc, ssc) * (1 / (1 + np.dot(up_vector, terrain_normal)))
-
+        
         # 4. Apply transformation to the Prior
         prior_pcd.rotate(rotation_matrix, center=(0, 0, 0))
         
         # 5. Correct the Height (d/b is the vertical offset from origin to plane)
         height_offset = -d / b
         prior_pcd.translate((0, height_offset, 0))
-
         return prior_pcd, inliers
 
     def update_visualization(self, geometry, voxels):
@@ -157,8 +156,8 @@ class Visualizer:
                 pass
         
         # Add new dynamic geometries
-        #self.vis.add_geometry(geometry, reset_bounding_box=False)
-        #self.vis.add_geometry(voxels, reset_bounding_box=False)
+        self.vis.add_geometry(geometry, reset_bounding_box=False)
+        self.vis.add_geometry(voxels, reset_bounding_box=False)
         
         # Store references for next frame's removal
         self._current_geometry = geometry
@@ -254,3 +253,171 @@ class Visualizer:
         ## adds
         
         return mesh
+
+    @staticmethod
+    def transform_voxels_to_world_frame(voxels, robot_position=(0, 0, 0), robot_rotation=(0, 0, 0)):
+        """
+        Transform voxels from camera frame to world frame.
+        
+        This accounts for the robot's pose (position and orientation) in the world/track frame.
+        
+        Args:
+            voxels: Open3D VoxelGrid to transform
+            robot_position: Tuple (x, y, z) - robot's position in world frame
+            robot_rotation: Tuple (roll, pitch, yaw) - robot's orientation in world frame (radians)
+            
+        Returns:
+            Transformed VoxelGrid in world coordinates
+        """
+        if voxels is None:
+            return None
+            
+        # Create transformation matrix from robot pose
+        # Build rotation matrix (Roll-Pitch-Yaw order)
+        roll, pitch, yaw = robot_rotation
+        
+        # Rotation matrices
+        R_x = np.array([
+            [1, 0, 0],
+            [0, np.cos(roll), -np.sin(roll)],
+            [0, np.sin(roll), np.cos(roll)]
+        ])
+        
+        R_y = np.array([
+            [np.cos(pitch), 0, np.sin(pitch)],
+            [0, 1, 0],
+            [-np.sin(pitch), 0, np.cos(pitch)]
+        ])
+        
+        R_z = np.array([
+            [np.cos(yaw), -np.sin(yaw), 0],
+            [np.sin(yaw), np.cos(yaw), 0],
+            [0, 0, 1]
+        ])
+        
+        # Combined rotation (Roll-Pitch-Yaw order)
+        R = R_z @ R_y @ R_x
+        
+        # Create 4x4 transformation matrix
+        T = np.eye(4)
+        T[:3, :3] = R
+        T[:3, 3] = robot_position
+        
+        # Apply transformation to voxels
+        voxels.transform(T)
+        
+        return voxels
+
+    @staticmethod
+    def align_geometries_in_world_frame(pcd, robot_position=(0, 0, 0), robot_rotation=(0, 0, 0)):
+        """
+        Align point cloud/voxels from camera frame to world frame.
+        
+        Accounts for both the camera-to-world rotation and the robot's pose.
+        
+        Args:
+            pcd: Open3D PointCloud or geometry to transform
+            robot_position: Robot's position in world frame (x, y, z)
+            robot_rotation: Robot's orientation in world frame (roll, pitch, yaw in radians)
+            
+        Returns:
+            Transformed geometry
+        """
+        if pcd is None:
+            return None
+        
+        # First, undo the camera frame rotation that was applied during capture
+        # (180° around X axis to convert from camera frame to Webots frame)
+        # This is already done in get_pcd, so we just need to apply robot pose
+        
+        roll, pitch, yaw = robot_rotation
+        
+        # Build rotation matrix
+        R_x = np.array([
+            [1, 0, 0],
+            [0, np.cos(roll), -np.sin(roll)],
+            [0, np.sin(roll), np.cos(roll)]
+        ])
+        
+        R_y = np.array([
+            [np.cos(pitch), 0, np.sin(pitch)],
+            [0, 1, 0],
+            [-np.sin(pitch), 0, np.cos(pitch)]
+        ])
+        
+        R_z = np.array([
+            [np.cos(yaw), -np.sin(yaw), 0],
+            [np.sin(yaw), np.cos(yaw), 0],
+            [0, 0, 1]
+        ])
+        
+        R = R_z @ R_y @ R_x
+        
+        # Create 4x4 transformation matrix
+        T = np.eye(4)
+        T[:3, :3] = R
+        T[:3, 3] = robot_position
+        
+        # Apply transformation
+        pcd.transform(T)
+        
+        return pcd
+
+    @staticmethod
+    def load_robot_model(obj_file_path, scale=1.0, position=(0, 0, 0), rotation=(0, 0, 0)):
+        """
+        Load a 3D robot model from an .obj file and position it on the tracker.
+        
+        Args:
+            obj_file_path: Path to the .obj file (e.g., 'protos/shadow.obj')
+            scale: Scaling factor for the model (default 1.0)
+            position: Tuple (x, y, z) for positioning the model on the tracker
+            rotation: Tuple (roll, pitch, yaw) in radians for rotating the model
+                    - roll: rotation around X axis
+                    - pitch: rotation around Y axis
+                    - yaw: rotation around Z axis
+            
+        Returns:
+            o3d.geometry.TriangleMesh: Colored mesh representing the robot model
+        """
+        try:
+            # Load the .obj file
+            mesh = o3d.io.read_triangle_mesh(obj_file_path)
+            
+            # Scale the model
+            mesh.scale(scale, center=mesh.get_center())
+            
+            # Apply rotations (in order: Roll-Pitch-Yaw)
+            roll, pitch, yaw = rotation
+            
+            # Rotation matrix around X axis (roll)
+            if roll != 0:
+                R_x = mesh.get_rotation_matrix_from_xyz([roll, 0, 0])
+                mesh.rotate(R_x, center=mesh.get_center())
+            
+            # Rotation matrix around Y axis (pitch)
+            if pitch != 0:
+                R_y = mesh.get_rotation_matrix_from_xyz([0, pitch, 0])
+                mesh.rotate(R_y, center=mesh.get_center())
+            
+            # Rotation matrix around Z axis (yaw)
+            if yaw != 0:
+                R_z = mesh.get_rotation_matrix_from_xyz([0, 0, yaw])
+                mesh.rotate(R_z, center=mesh.get_center())
+            
+            # Color the model (light blue/cyan)
+            mesh.paint_uniform_color([0.0, 0.7, 1.0])
+            
+            # Compute normals for better lighting
+            mesh.compute_vertex_normals()
+            
+            # Position the model on the tracker
+            mesh.translate(np.array(position))
+            
+            return mesh
+        except FileNotFoundError:
+            print(f"Error: Could not find .obj file at {obj_file_path}")
+            return None
+        except Exception as e:
+            print(f"Error loading .obj file: {e}")
+            return None

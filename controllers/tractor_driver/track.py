@@ -9,18 +9,21 @@ import numpy as np
 
 class Track:
     """
-    Represents a flat track on the ground (z=0) with parameterized geometry.
+    Represents a flat track on the ground with parameterized geometry.
     
     The track is defined by:
     - length: longitudinal extent along z-axis
     - width: lateral extent along x-axis
     - curvature: radius of curvature (positive = curves to the right)
+    - position: (x, y, z) offset for track location in 3D space
+    - rotation: (roll, pitch, yaw) rotation angles in radians
     
-    Origin is at (0, 0) in the XY plane.
+    By default, track origin is at (0, 0, 0) with no rotation.
     """
     
     def __init__(self, length: float, width: float, curvature: float, 
                 num_z_points: int = 100, num_x_points: int = 50,
+                position: tuple = (0, 0, 0), rotation: tuple = (0, 0, 0),
                 device: str = 'cpu', dtype: torch.dtype = torch.float32):
         """
         Initialize the Track model.
@@ -31,6 +34,8 @@ class Track:
             curvature: Radius of curvature in meters (inf or very large = straight)
             num_z_points: Number of points along the track length
             num_x_points: Number of points across the track width
+            position: Tuple (x, y, z) offset for track position in meters
+            rotation: Tuple (roll, pitch, yaw) rotation in radians
             device: Device to place tensors on ('cpu' or 'cuda')
             dtype: Data type for tensors (torch.float32 or torch.float64)
         """
@@ -39,6 +44,8 @@ class Track:
         self.curvature = curvature if curvature != float('inf') else 1e6
         self.num_z_points = num_z_points
         self.num_x_points = num_x_points
+        self.position = np.array(position)  # Store as numpy array
+        self.rotation = np.array(rotation)  # Store as numpy array (roll, pitch, yaw)
         self.device = device
         self.dtype = dtype
         
@@ -46,7 +53,7 @@ class Track:
         self._generate_track()
     
     def _generate_track(self):
-        """Generate the track surface points as PyTorch tensors."""
+        """ Generate the track surface points as PyTorch tensors."""
         # Create parametric z coordinates (along the track length)
         z_coords = torch.linspace(0, self.length, self.num_z_points, 
                                 device=self.device, dtype=self.dtype)
@@ -76,16 +83,87 @@ class Track:
         
         # Stack to create 3D point cloud: (num_points, 3)
         # Reshape to (num_z_points * num_x_points, 3)
-        self.points = torch.stack([
+        points = torch.stack([
             x_curved.reshape(-1),
             z_ground.reshape(-1),
             z_grid.reshape(-1)
-        ], dim=1)  # Shape: (num_z_points * num_x_points, 3)
+            ], dim=1)  # Shape: (num_z_points * num_x_points, 3)
+        
+        # Apply rotation to points
+        if np.any(self.rotation != 0):
+            # Convert rotation to rotation matrix (Roll-Pitch-Yaw)
+            roll, pitch, yaw = self.rotation
+            
+            # Rotation around X axis (roll)
+            R_x = np.array([
+                [1, 0, 0],
+                [0, np.cos(roll), -np.sin(roll)],
+                [0, np.sin(roll), np.cos(roll)]
+            ])
+            
+            # Rotation around Y axis (pitch)
+            R_y = np.array([
+                [np.cos(pitch), 0, np.sin(pitch)],
+                [0, 1, 0],
+                [-np.sin(pitch), 0, np.cos(pitch)]
+            ])
+            
+            # Rotation around Z axis (yaw)
+            R_z = np.array([
+                [np.cos(yaw), -np.sin(yaw), 0],
+                [np.sin(yaw), np.cos(yaw), 0],
+                [0, 0, 1]
+            ])
+            
+            # Combined rotation matrix (Roll-Pitch-Yaw order)
+            R = R_z @ R_y @ R_x
+            
+            # Apply rotation to points
+            points_np = points.detach().cpu().numpy()
+            points_rotated = points_np @ R.T
+            points = torch.from_numpy(points_rotated).to(device=self.device, dtype=self.dtype)
+        
+        # Apply position offset
+        if np.any(self.position != 0):
+            position_tensor = torch.from_numpy(self.position).to(device=self.device, dtype=self.dtype)
+            points = points + position_tensor
+        
+        self.points = points
         
         # Store grid versions for visualization purposes
         self.x_grid = x_curved  # (num_z_points, num_x_points)
         self.y_grid = z_ground   # (num_z_points, num_x_points)
         self.z_grid = z_grid     # (num_z_points, num_x_points)
+        
+        # Apply transformations to grids as well for visualization
+        if np.any(self.rotation != 0) or np.any(self.position != 0):
+            # Flatten grids and apply transformations
+            x_flat = self.x_grid.reshape(-1)
+            y_flat = self.y_grid.reshape(-1)
+            z_flat = self.z_grid.reshape(-1)
+            
+            grid_points = torch.stack([x_flat, y_flat, z_flat], dim=1)
+            
+            # Apply rotation
+            if np.any(self.rotation != 0):
+                points_np = grid_points.detach().cpu().numpy()
+                roll, pitch, yaw = self.rotation
+                R_x = np.array([[1, 0, 0], [0, np.cos(roll), -np.sin(roll)], [0, np.sin(roll), np.cos(roll)]])
+                R_y = np.array([[np.cos(pitch), 0, np.sin(pitch)], [0, 1, 0], [-np.sin(pitch), 0, np.cos(pitch)]])
+                R_z = np.array([[np.cos(yaw), -np.sin(yaw), 0], [np.sin(yaw), np.cos(yaw), 0], [0, 0, 1]])
+                R = R_z @ R_y @ R_x
+                points_rotated = points_np @ R.T
+                grid_points = torch.from_numpy(points_rotated).to(device=self.device, dtype=self.dtype)
+            
+            # Apply position
+            if np.any(self.position != 0):
+                position_tensor = torch.from_numpy(self.position).to(device=self.device, dtype=self.dtype)
+                grid_points = grid_points + position_tensor
+            
+            # Reshape back to grids
+            self.x_grid = grid_points[:, 0].reshape(self.num_z_points, self.num_x_points)
+            self.y_grid = grid_points[:, 1].reshape(self.num_z_points, self.num_x_points)
+            self.z_grid = grid_points[:, 2].reshape(self.num_z_points, self.num_x_points)
     
     def get_track_edges(self):
         """
@@ -125,13 +203,15 @@ class Track:
         return center_line
     
     def update_parameters(self, length: float = None, width: float = None, 
-                        curvature: float = None):
+                        curvature: float = None, position: tuple = None, rotation: tuple = None):
         """
         Update track parameters and regenerate geometry.
         Args:
             length: New track length (if None, keeps current value)
             width: New track width (if None, keeps current value)
             curvature: New curvature (if None, keeps current value)
+            position: New position tuple (x, y, z) (if None, keeps current value)
+            rotation: New rotation tuple (roll, pitch, yaw) (if None, keeps current value)
         """
         if length is not None:
             self.length = length
@@ -139,6 +219,10 @@ class Track:
             self.width = width
         if curvature is not None:
             self.curvature = curvature if curvature != float('inf') else 1e6
+        if position is not None:
+            self.position = np.array(position)
+        if rotation is not None:
+            self.rotation = np.array(rotation)
         
         self._generate_track()
     

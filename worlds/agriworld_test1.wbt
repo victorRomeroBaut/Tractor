@@ -11,8 +11,8 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/project
 WorldInfo {
 }
 Viewpoint {
-  orientation -0.08413754391068075 0.9846636685564756 0.1528343336085889 0.5507976205527803
-  position -7.186520280031809 12.789539059742957 8.705042172865188
+  orientation -0.15182857507321396 0.582966249711378 0.7981844620691942 0.21704640343093257
+  position -3.2266533211863107 15.210068712473912 4.322422140070189
 }
 TexturedBackgroundLight {
 }
@@ -44,7 +44,7 @@ PottedTree {
   name "potted tree(49)"
 }
 PottedTree {
-  translation 7.5 12 3.2
+  translation 7.5 14.84 3.2
   name "potted tree(48)"
 }
 PottedTree {
@@ -80,7 +80,7 @@ PottedTree {
   name "potted tree(40)"
 }
 PottedTree {
-  translation 6 12 3.3
+  translation 6 14.76 3.3
   name "potted tree(39)"
 }
 PottedTree {
@@ -116,7 +116,7 @@ PottedTree {
   name "potted tree(31)"
 }
 PottedTree {
-  translation 4.5 12 3.3
+  translation 4.5 14.76 3.3
   name "potted tree(30)"
 }
 PottedTree {
@@ -152,7 +152,7 @@ PottedTree {
   name "potted tree(22)"
 }
 PottedTree {
-  translation 3 12 3.4
+  translation 3 14.78 3.4
   name "potted tree(21)"
 }
 PottedTree {
@@ -188,7 +188,7 @@ PottedTree {
   name "potted tree(13)"
 }
 PottedTree {
-  translation 0 12 3.4
+  translation 0 14.76 3.4
   name "potted tree(12)"
 }
 PottedTree {
@@ -224,7 +224,7 @@ PottedTree {
   name "potted tree(4)"
 }
 PottedTree {
-  translation 1.5 12 3.4
+  translation 1.5 14.74 3.4
   name "potted tree(3)"
 }
 PottedTree {
@@ -243,20 +243,12 @@ PottedTree {
   translation 1.5 1 2.8
 }
 Rosbot {
-  hidden position_0_0 421.5228217083181
-  hidden position_0_1 870.2086884235789
-  hidden position_0_2 421.5229340429362
-  hidden position_0_3 870.2088127693144
-  hidden rotation_2 0 -1 0 5.733779179893804
-  hidden rotation_3 0 1 0 3.129116032795972
-  hidden rotation_4 0 -1 0 5.733666845275695
-  hidden rotation_5 0 0.9999999999999999 0 3.1292403785314296
-  translation 0.27150722864027155 13.941680292626764 3.779108599393031
-  rotation 0.2725279660484681 0.41532594825869656 -0.867889891878284 -0.05388530717958595
+  translation 0.0158401 15.2916 3.74119
+  rotation -0.36231881504734287 -0.4542427681229805 0.8138725845429747 0.0583846
   controller "<extern>"
 }
 Rock {
-  translation -3 16 3.6
+  translation -0.9 16 3.73
   name "rock(2)"
 }
 Rock {
