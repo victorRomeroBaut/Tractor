@@ -46,9 +46,11 @@ def get_pcd(rgb_cam, depth_cam, height: int, width: int, focal_length, cx, cy, v
     pcd.rotate(R, center=(0,0,0))
     pcd = pcd.voxel_down_sample(voxel_size=voxel_size)
     pcd, ind = pcd.remove_statistical_outlier(nb_neighbors=20, std_ratio=1.5)
-    plane_model, inliers = pcd.segment_plane(distance_threshold=0.05, ransac_n=3, num_iterations=1000)
+    plane_model, inliers = pcd.segment_plane(distance_threshold=0.10, #0.05  # How far from plane to count as ground (smaller = stricter)
+                                            ransac_n=3,                 # Number of points to estimate plane (keep at 3)
+                                            num_iterations=2000)
     # point cloud processing
-    ground_cloud = pcd.select_by_index(inliers, invert=True)
+    ground_cloud = pcd.select_by_index(inliers, invert=False)  
     crop_cloud = pcd.select_by_index(inliers, invert=True)
     ground_cloud.paint_uniform_color([0.5, 0.5, 0.5])
     return pcd, ground_cloud, crop_cloud
@@ -110,11 +112,12 @@ def main():
     voxel_size = 0.05
     # Track mesh positioned in front of robot (positive Z direction)
     # Represents the transitable path for the robot object
-    track = Track(length=10.0, width=2.0,
+    track = Track(length=10.0, width=60.0,
                 curvature=0.01,
                 num_x_points=100,
                 num_z_points=200,
-                position=(-0.15, -0.28, 0.0), rotation=(0, np.pi/2, 0))  # Positioned 2 meters in front
+                position=(-0.50, -0.28, 0.0),
+                rotation=(0, np.pi/2, 0))  # Positioned 2 meters in front
     visualizer = Visualizer()
     # Create and add track geometry to visualizer (represents transitable path)
     # Set flip_normals=True to flip the mesh face direction
