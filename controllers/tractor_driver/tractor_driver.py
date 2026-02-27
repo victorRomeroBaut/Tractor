@@ -108,19 +108,24 @@ def main():
     
     #? Open3D Visualizer Setup
     voxel_size = 0.05
-    # Track mesh positioned in camera frame coordinate system
-    track = Track(length=10.0, width=2.0, curvature=0.01, num_x_points=100, num_z_points=200,
-                position=(0, 0, 0), rotation=(0, 0, 0))  # Camera frame coordinates
+    # Track mesh positioned in front of robot (positive Z direction)
+    # Represents the transitable path for the robot object
+    track = Track(length=10.0, width=2.0,
+                curvature=0.01,
+                num_x_points=100,
+                num_z_points=200,
+                position=(-0.15, -0.28, 0.0), rotation=(0, np.pi/2, 0))  # Positioned 2 meters in front
     visualizer = Visualizer()
-    # Create and add track geometry to visualizer (in camera frame)
-    track_mesh = Visualizer.create_track_geometry(track)
+    # Create and add track geometry to visualizer (represents transitable path)
+    # Set flip_normals=True to flip the mesh face direction
+    track_mesh = Visualizer.create_track_geometry(track, flip_normals=True)
     visualizer.add_geometry(track_mesh, is_track=True)
     #? Robot model loading and visualization
-    # Load and add robot model (.obj file) in camera frame coordinates
+    # Robot at origin (camera frame) - will follow the track path in front
     robot_model = Visualizer.load_robot_model(obj_file_path="/home/victor/Tractor/protos/shadow.obj",
                                             scale=0.5,                                              # Adjust scale as needed for your model
-                                            position=(0, 0, 0),                                     # Camera frame position
-                                            rotation=(-np.pi/2, np.pi/2, 0))                        # Camera frame rotation
+                                            position=(0, 0, 0),                                     # Robot at camera origin
+                                            rotation=(-np.pi/2, np.pi/2, 0))                        # Robot orientation
     if robot_model:
         visualizer.add_geometry(robot_model, is_track=False)
     

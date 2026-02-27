@@ -208,12 +208,13 @@ class Visualizer:
         self.vis.destroy_window()
 
     @staticmethod
-    def create_track_geometry(track):
+    def create_track_geometry(track, flip_normals=False):
         """
         Create a white solid mesh geometry from a Track object.
         
         Args:
             track: Track object with x_grid, y_grid, z_grid attributes
+            flip_normals: If True, invert the mesh face normals (flip triangle orientation)
             
         Returns:
             o3d.geometry.TriangleMesh: White mesh representing the track
@@ -242,6 +243,10 @@ class Visualizer:
                 triangles.append([v0, v1, v2])
                 triangles.append([v1, v3, v2])
         
+        # Flip triangle winding order if requested (inverts normals)
+        if flip_normals:
+            triangles = [[t[2], t[1], t[0]] for t in triangles]  # Reverse vertex order
+        
         # Create mesh
         mesh = o3d.geometry.TriangleMesh()
         mesh.vertices = o3d.utility.Vector3dVector(vertices)
@@ -250,7 +255,6 @@ class Visualizer:
         # Paint white and compute normals for better visualization
         mesh.paint_uniform_color([1.0, 1.0, 1.0])  # White
         mesh.compute_vertex_normals()
-        ## adds
         
         return mesh
 
