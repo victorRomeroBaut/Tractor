@@ -8,7 +8,7 @@ from visualizer import Visualizer
 from track import Track
 
 
-def get_pcd(rgb_cam, depth_cam, height: int, width: int, focal_length, cx, cy):
+def get_pcd(rgb_cam, depth_cam, height: int, width: int, focal_length, cx, cy, voxel_size:float=0.05):
     """Get point cloud from RGB and depth camera."""
     depth_data = depth_cam.getRangeImage()
     depth_image = np.array(depth_data).reshape((height, width))
@@ -44,7 +44,14 @@ def get_pcd(rgb_cam, depth_cam, height: int, width: int, focal_length, cx, cy):
     # Rotate environment to match Webots coordinate system (Y up, Z forward)
     R = pcd.get_rotation_matrix_from_axis_angle([np.pi, 0, 0])
     pcd.rotate(R, center=(0,0,0))
-    return pcd
+    pcd = pcd.voxel_down_sample(voxel_size=voxel_size)
+    pcd, ind = pcd.remove_statistical_outlier(nb_neighbors=20, std_ratio=1.5)
+    plane_model, inliers = pcd.segment_plane(distance_threshold=0.05, ransac_n=3, num_iterations=1000)
+    # point cloud processing
+    ground_cloud = pcd.select_by_index(inliers, invert=True)
+    crop_cloud = pcd.select_by_index(inliers, invert=True)
+    ground_cloud.paint_uniform_color([0.5, 0.5, 0.5])
+    return pcd, ground_cloud, crop_cloud
 
 
 def main():
@@ -53,7 +60,10 @@ def main():
     # 1. Initialize the Robot
     robot = Robot()
     timestep = int(robot.getBasicTimeStep())
-
+    SAFE_DIST = 0.25 # 
+    BASE_SPEED = 2.0 # 4.0
+    KP = 2.5 # 3.5
+    STEER_SENSITIVITY = 40.0 # 
     # 2. Define the device names
     # These are the standard names for the Husarion ROSbot 2.0 PROTO fl_wheel_joint
     motor_names = [
@@ -61,7 +71,6 @@ def main():
         'fr_wheel_joint',
         'rl_wheel_joint',
         'rr_wheel_joint']
-
     motors = []
     for name in motor_names:
         motor = robot.getDevice(name)
@@ -96,100 +105,54 @@ def main():
         print("All motors found")
     else:
         print("Check motor names in the Scene Tree. Movement aborted.")
-
-    SAFE_DIST = 0.25 # 
-    BASE_SPEED = 2.0 # 4.0
-    KP = 2.5 # 3.5
-    STEER_SENSITIVITY = 40.0 # 
-    #? Active inference object
-    voxel_size = 0.05 # 0.03
-    #nav = ActiveInferenceNav(row_width=1, voxel_size=voxel_size)
-    track = Track(length=10.0, width=2.0, curvature=0.01, num_x_points=100, num_z_points=200,
-                position=(0.1, -0.35, -0.5), rotation=(0, np.pi/2, 0))  # Slightly above the ground and rotated to align with the track
-    visualizer = Visualizer()
     
-    # Create and add track geometry to visualizer
+    #? Open3D Visualizer Setup
+    voxel_size = 0.05
+    # Track mesh positioned in camera frame coordinate system
+    track = Track(length=10.0, width=2.0, curvature=0.01, num_x_points=100, num_z_points=200,
+                position=(0, 0, 0), rotation=(0, 0, 0))  # Camera frame coordinates
+    visualizer = Visualizer()
+    # Create and add track geometry to visualizer (in camera frame)
     track_mesh = Visualizer.create_track_geometry(track)
     visualizer.add_geometry(track_mesh, is_track=True)
-    
-    # Load and add robot model (.obj file) positioned on the tracker
+    #? Robot model loading and visualization
+    # Load and add robot model (.obj file) in camera frame coordinates
     robot_model = Visualizer.load_robot_model(obj_file_path="/home/victor/Tractor/protos/shadow.obj",
-                                            scale=0.8,  # Adjust scale as needed for your model
-                                            position=(0, 0.1, 0.1),  # Position (x, y, z) on the tracker - y is height above track
-                                            rotation=(-np.pi/2, np.pi/2, 0))  # Rotation in radians (roll, pitch, yaw)
+                                            scale=0.5,                                              # Adjust scale as needed for your model
+                                            position=(0, 0, 0),                                     # Camera frame position
+                                            rotation=(-np.pi/2, np.pi/2, 0))                        # Camera frame rotation
     if robot_model:
         visualizer.add_geometry(robot_model, is_track=False)
     
-    # Robot pose in track frame (position and orientation)
-    # These should be updated if the robot moves/rotates in your simulation
-    ROBOT_POSITION = np.array([0.0, 0.0, 0.0])  # (x, y, z) in track frame
-    ROBOT_ROTATION = np.array([0.0, 0.0, 0.0])  # (roll, pitch, yaw) in radians
-    
-    # Set initial camera view for better visualization
-    #visualizer.reset_view()
-    #ctr = visualizer.get_view_control()
-    #ctr.set_front([0, -1, -1])
-    #ctr.set_lookat([0, 0, 0])
-    #ctr.set_up([0, -1, 0])
-    #ctr.set_zoom(-0.05)
     #? 4. Main Simulation Loop
     while robot.step(timestep) != -1:
-        # Logic can be added here (e.g., stop after 10 seconds)
+        #? LiDAR processing
         ranges = lidar.getRangeImage()
-        # check a 30-degree slice in the front center
-        front_arc = ranges[int(len(ranges)*0.45) : int(len(ranges) *0.55)]
+        front_arc = ranges[int(len(ranges)*0.45) : int(len(ranges) *0.55)] # check a 30-degree slice in the front center
         min_dist_front = min(front_arc)
         #? point cloud generation
-        pcd = get_pcd(rgb_cam=cam,
-                    depth_cam=depth_cam,
-                    height=height,
-                    width=width,
-                    focal_length=focal_length,
-                    cx=cx, cy=cy)
-        pcd = pcd.voxel_down_sample(voxel_size=voxel_size)
-        pcd, ind = pcd.remove_statistical_outlier(nb_neighbors=20, std_ratio=1.5)
-        plane_model, inliers = pcd.segment_plane(distance_threshold=0.05, ransac_n=3, num_iterations=1000)
-        # point cloud processing
-        ground_cloud = pcd.select_by_index(inliers, invert=True)
-        crop_cloud = pcd.select_by_index(inliers, invert=True)
-        ground_cloud.paint_uniform_color([0.5, 0.5, 0.5])
+        pcd, ground_cloud, crop_cloud = get_pcd(rgb_cam=cam, depth_cam=depth_cam,
+                                                height=height, width=width,
+                                                focal_length=focal_length,
+                                                cx=cx, cy=cy, voxel_size=voxel_size)
         #? point cloud visualization
-        voxels = o3d.geometry.VoxelGrid.create_from_point_cloud(crop_cloud, voxel_size)
-        # steering, belief_dist = nav.select_action(voxels, prior)
+        voxels = o3d.geometry.VoxelGrid.create_from_point_cloud(crop_cloud, voxel_size) # Create voxels from point cloud (all in camera frame coordinate system)
+        # All geometries (track, robot, voxels, point clouds) are now in camera frame
+        visualizer.update_visualization(geometry=ground_cloud, voxels=voxels)
+        
         speed_l = 0.0 # BASE_SPEED + (steering * 2.0)
         speed_r = 0.0 # BASE_SPEED - (steering * 2.0)
-        
+        #? Motor control logic based on LiDAR obstacle detection
         if min_dist_front < SAFE_DIST:
             print(f"LiDAR obstacle at: {min_dist_front:.2f}")
             speed_l = 0.0
             speed_r = 0.0
-        
-        #o3d.visualization.draw_geometries([crop_cloud, ground_cloud], window_name="Agriculture point cloud")
-        # Transform point clouds to world frame (track coordinates) BEFORE creating voxels
-        ground_cloud = Visualizer.align_geometries_in_world_frame(
-            ground_cloud, 
-            robot_position=tuple(ROBOT_POSITION), 
-            robot_rotation=tuple(ROBOT_ROTATION)
-        )
-        crop_cloud = Visualizer.align_geometries_in_world_frame(
-            crop_cloud,
-            robot_position=tuple(ROBOT_POSITION),
-            robot_rotation=tuple(ROBOT_ROTATION)
-        )
-        
-        # Create voxels from the transformed point cloud (now in world frame)
-        voxels = o3d.geometry.VoxelGrid.create_from_point_cloud(crop_cloud, voxel_size)
-        
-        # Update visualization - events are processed at the start of update_visualization
-        visualizer.update_visualization(geometry=ground_cloud, voxels=voxels)
-        
         # apply control to motors
         # Motor indices: 0=FL, 1=FR, 2=RL, 3=RR
         motors[0].setVelocity(speed_l) # Front Left max(min(speed_l, 10), -10)
         motors[2].setVelocity(speed_l) # Rear Left max(min(speed_l, 10), -10)
         motors[1].setVelocity(speed_r) # Front Right max(min(speed_r, 10), -10)
         motors[3].setVelocity(speed_r) # Rear Right max(min(speed_r, 10), -10)
-        #time.sleep(0.1)  # Sleep to simulate control loop timing (adjust as needed)
 
 if __name__ == '__main__':
     main()
