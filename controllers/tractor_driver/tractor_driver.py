@@ -125,10 +125,10 @@ def main():
     visualizer.add_geometry(track_mesh, is_track=True)
     #? Robot model loading and visualization
     # Robot at origin (camera frame) - will follow the track path in front
-    robot_model = Visualizer.load_robot_model(obj_file_path="/home/victor/Tractor/protos/shadow.obj",
+    robot_model = Visualizer.load_robot_model(obj_file_path="/home/victor/Dev/Sims/Tractor/protos/husky1/working_husky.obj", #"/home/victor/Tractor/protos/shadow.obj",
                                             scale=0.5,                                              # Adjust scale as needed for your model
                                             position=(0, 0, 0),                                     # Robot at camera origin
-                                            rotation=(-np.pi/2, np.pi/2, 0))                        # Robot orientation
+                                            rotation=(0, np.pi/2, 0)) # -np.pi/2                       # Robot orientation
     if robot_model:
         visualizer.add_geometry(robot_model, is_track=False)
     
