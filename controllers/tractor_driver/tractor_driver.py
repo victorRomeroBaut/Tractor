@@ -1,7 +1,6 @@
 from controller import Robot
 import numpy as np
 import cv2 as cv
-import torch
 from active_inference import ActiveInferenceNav
 import open3d as o3d 
 from visualizer import Visualizer
@@ -85,9 +84,9 @@ def main():
             print(f"FAILED TO FIND: {name}")
         
     # Activate Lidar
-    lidar = robot.getDevice("laser")
-    if lidar:
-        lidar.enable(timestep)
+    #lidar = robot.getDevice("laser")
+    #if lidar:
+    #    lidar.enable(timestep)
     # Setup camera
     cam = robot.getDevice("camera rgb")
     if cam:
@@ -125,19 +124,19 @@ def main():
     visualizer.add_geometry(track_mesh, is_track=True)
     #? Robot model loading and visualization
     # Robot at origin (camera frame) - will follow the track path in front
-    robot_model = Visualizer.load_robot_model(obj_file_path="/home/victor/Dev/Sims/Tractor/protos/husky1/working_husky.obj", #"/home/victor/Tractor/protos/shadow.obj",
-                                            scale=0.5,                                              # Adjust scale as needed for your model
+    robot_model = Visualizer.load_robot_model(obj_file_path="/home/victor/Tractor/meshes/husky.obj", #"/home/victor/Tractor/protos/shadow.obj",
+                                            scale=0.45,                                              # Adjust scale as needed for your model
                                             position=(0, 0, 0),                                     # Robot at camera origin
-                                            rotation=(0, np.pi/2, 0)) # -np.pi/2                       # Robot orientation
+                                            rotation=(0, -np.pi/2, 0)) # -np.pi/2                       # Robot orientation
     if robot_model:
         visualizer.add_geometry(robot_model, is_track=False)
     
     #? 4. Main Simulation Loop
     while robot.step(timestep) != -1:
         #? LiDAR processing
-        ranges = lidar.getRangeImage()
-        front_arc = ranges[int(len(ranges)*0.45) : int(len(ranges) *0.55)] # check a 30-degree slice in the front center
-        min_dist_front = min(front_arc)
+        #ranges = lidar.getRangeImage()
+        #front_arc = ranges[int(len(ranges)*0.45) : int(len(ranges) *0.55)] # check a 30-degree slice in the front center
+        #min_dist_front = min(front_arc)
         #? point cloud generation
         pcd, ground_cloud, crop_cloud = get_pcd(rgb_cam=cam, depth_cam=depth_cam,
                                                 height=height, width=width,
@@ -151,16 +150,16 @@ def main():
         speed_l = 0.0 # BASE_SPEED + (steering * 2.0)
         speed_r = 0.0 # BASE_SPEED - (steering * 2.0)
         #? Motor control logic based on LiDAR obstacle detection
-        if min_dist_front < SAFE_DIST:
-            print(f"LiDAR obstacle at: {min_dist_front:.2f}")
-            speed_l = 0.0
-            speed_r = 0.0
+        #if min_dist_front < SAFE_DIST:
+        #    print(f"LiDAR obstacle at: {min_dist_front:.2f}")
+        #    speed_l = 0.0
+        #    speed_r = 0.0
         # apply control to motors
         # Motor indices: 0=FL, 1=FR, 2=RL, 3=RR
-        motors[0].setVelocity(speed_l) # Front Left max(min(speed_l, 10), -10)
-        motors[2].setVelocity(speed_l) # Rear Left max(min(speed_l, 10), -10)
-        motors[1].setVelocity(speed_r) # Front Right max(min(speed_r, 10), -10)
-        motors[3].setVelocity(speed_r) # Rear Right max(min(speed_r, 10), -10)
+        #motors[0].setVelocity(speed_l) # Front Left max(min(speed_l, 10), -10)
+        #motors[2].setVelocity(speed_l) # Rear Left max(min(speed_l, 10), -10)
+        #motors[1].setVelocity(speed_r) # Front Right max(min(speed_r, 10), -10)
+        #motors[3].setVelocity(speed_r) # Rear Right max(min(speed_r, 10), -10)
 
 if __name__ == '__main__':
     main()

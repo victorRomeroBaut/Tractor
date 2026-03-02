@@ -4,7 +4,6 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/project
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/UnevenTerrain.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/rocks/protos/Rock.proto"
-EXTERNPROTO "../protos/Rosbot.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/plants/protos/PottedTree.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/plants/protos/FlowerPot.proto"
 EXTERNPROTO "../protos/Husky.proto"
@@ -13,8 +12,8 @@ EXTERNPROTO "../protos/Astra.proto"
 WorldInfo {
 }
 Viewpoint {
-  orientation 0.1552900149759849 0.11253091872722544 -0.9814386397422739 3.119517314910453
-  position 2.078568249895951 15.45361512819185 5.172397645808155
+  orientation 0.7748651593652077 -0.2422327063858511 0.5838726751261076 6.006013199798121
+  position -8.602641972978654 15.641280768460337 4.727825221455949
 }
 TexturedBackgroundLight {
 }
@@ -26,12 +25,12 @@ UnevenTerrain {
   rotation 0 0 1 1.0472
 }
 Husky {
-  translation -0.89 15.5 3.81
-  rotation -1 0 0 -1.5707953071795862
+  translation -0.53 15.3 3.81
+  rotation 7.851293122126192e-08 0.7071072811865674 0.7071062811861697 -3.1415853071795863
   cameraSlot [
     Astra {
-      translation 0.148207 -0.194411 -0.108446
-      rotation 0.6014290937240109 -0.6014320937244784 -0.525892081952662 0.470153
+      translation 0.25400901864516623 -0.22182634871107076 -0.1080617229275962
+      rotation 0.6591409475498474 -0.33490497335044783 -0.6733289464208598 0.4801553071795873
       name "camera"
     }
   ]
@@ -57,7 +56,7 @@ PottedTree {
   name "potted tree(49)"
 }
 PottedTree {
-  translation 7.5 14.84 3.2
+  translation 7.5 14.6 3.2
   name "potted tree(48)"
 }
 PottedTree {
@@ -93,7 +92,7 @@ PottedTree {
   name "potted tree(40)"
 }
 PottedTree {
-  translation 6 14.76 3.3
+  translation 6 14.6 3.3
   name "potted tree(39)"
 }
 PottedTree {
@@ -129,7 +128,7 @@ PottedTree {
   name "potted tree(31)"
 }
 PottedTree {
-  translation 4.5 14.76 3.3
+  translation 4.5 14.6 3.3
   name "potted tree(30)"
 }
 PottedTree {
@@ -165,7 +164,7 @@ PottedTree {
   name "potted tree(22)"
 }
 PottedTree {
-  translation 3 14.78 3.4
+  translation 3 14.6 3.4
   name "potted tree(21)"
 }
 PottedTree {
@@ -201,7 +200,7 @@ PottedTree {
   name "potted tree(13)"
 }
 PottedTree {
-  translation 0 14.76 3.4
+  translation 0 14.6 3.4
   name "potted tree(12)"
 }
 PottedTree {
@@ -237,7 +236,7 @@ PottedTree {
   name "potted tree(4)"
 }
 PottedTree {
-  translation 1.5 14.74 3.4
+  translation 1.5 14.6 3.4
   name "potted tree(3)"
 }
 PottedTree {
@@ -254,13 +253,6 @@ FlowerPot {
 }
 PottedTree {
   translation 1.5 1 2.8
-}
-Rosbot {
-  hidden linearVelocity_0 -7.668971840084114e-07 6.335644040285115e-07 -2.8281826670910742e-08
-  hidden angularVelocity_0 -1.7859340184257806e-10 1.4949457741784896e-10 8.127737593464526e-09
-  translation 0.28247698686098965 15.274687585679155 3.7577743599668074
-  rotation -0.3018352564275073 -0.34684478956537335 0.8880282483844155 0.062304163198336766
-  controller "<extern>"
 }
 Rock {
   translation 1.92633 16.1884 3.81

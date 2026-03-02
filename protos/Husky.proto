@@ -10,6 +10,7 @@ PROTO Husky [
     field SFString      name            "husky"
     field SFString      controller      "<extern>"
     field  MFNode      cameraSlot      [ Astra { name "camera" } ] # Extends the robot with an Astra RGBD camera.
+    #field SFBool        supervisor       TRUE
 ]
 
 {
@@ -20,8 +21,71 @@ PROTO Husky [
         model "ROBOLAB husky"
         controller IS controller
         children [
-            # --- obj robot body 
-            CadShape { url "../meshes/husky.obj" }
+            # main chassis 
+            CadShape { url "./meshes/husky_chassis.obj" }
+            # Wheels
+            # Front left wheel
+            HingeJoint {
+                jointParameters HingeJointParameters {
+                    axis 0.000000 1.000000 0.000000
+                    anchor 0.256000 0.285400 0.032820
+                    dampingConstant 0.0
+                    staticFriction 0.0
+                }
+                device [
+                    RotationalMotor {
+                        name "front_left_wheel"
+                        maxVelocity 100
+                    }
+                ]
+                endPoint Solid {
+                    contactMaterial "wheel"
+                    translation 0.256000 0.285400 0.032820
+                    rotation 0.000 1.000 0.000 0.000
+                    children [
+                        CadShape { url "./meshes/husky_front_left_wheel.obj" }
+                    ]
+
+                    name "front_left_wheel_link"
+                    boundingObject Transform {
+                        translation 0.000000 0.000000 0.000000
+                        rotation 1.000000 0.000000 0.000000 3.141591
+                        children [
+                            Cylinder {
+                                radius 0.1651
+                                height 0.1143
+                            }
+                        ]
+                    }
+                    physics Physics {
+                        density -1
+                        mass 2.637000
+                    centerOfMass [ 0.000000 0.000000 0.000000 ]
+                    }
+                }
+            }
+            #HingeJoint {
+            #    jointParameters HingeJointParameters {
+            #        axis 0 1 0
+            #        anchor -0.18 0.28 0.165
+            #    }
+            #    device [ RotationalMotor { name "wheel_front_left_motor" } ]
+            #    endPoint Solid {
+            #        translation -0.18 0.28 0.165
+            #        name "wheel_front_left"
+            #        children [
+            #            CadShape { url "./meshes/husky_front_left_wheel.obj" }
+            #        ]
+            #        boundingObject Sphere {
+            #            radius 0.1
+            #        }
+            #        physics Physics {
+            #            mass 1
+            #        }
+            #    }
+            #}
+
+            # Sensors
             Group {
                 children [
                     Camera {
@@ -32,7 +96,7 @@ PROTO Husky [
                         width 960
                         height 960
                         projection "cylindrical"
-                        }
+                    }
                     Camera {
                         translation -0.18 0 1.34
                         rotation 0 0 -1 -1.5708053071795867
@@ -41,9 +105,10 @@ PROTO Husky [
                         width 960
                         height 960
                         projection "cylindrical"
-                        }
-                    ]
-                }
+                    }
+                ]
+            }
+            # Camera Slot
             DEF CAMERA_SLOT Pose {
                 translation -0.027 0.35 0.165
                 rotation 0 -0.75 -1 2.7
@@ -64,8 +129,8 @@ PROTO Husky [
                 defaultFrequency 20
             }
             Lidar {
-                translation 0.1 -2.65355e-08 0.54
-                rotation 1 0 0 3.14159
+                translation 0 0.28 0
+                rotation 1 0 0 1.5708 
                 children [
                     Shape {
                         appearance DEF BlackMetalAppearance PBRAppearance {
