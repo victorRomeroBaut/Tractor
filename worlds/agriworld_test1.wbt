@@ -10,30 +10,40 @@ EXTERNPROTO "../protos/Husky.proto"
 EXTERNPROTO "../protos/Astra.proto"
 
 WorldInfo {
+  info [
+    "Simulation of the ROBOLAB shadow robot."
+  ]
+  title "ROBOLAB shadow"
+  basicTimeStep 16
 }
+
 Viewpoint {
-  orientation 0.7748651593652077 -0.2422327063858511 0.5838726751261076 6.006013199798121
-  position -8.602641972978654 15.641280768460337 4.727825221455949
+  orientation 0.10088223673443704 0.07659988407165583 -0.9919451759405183 1.153617053139718
+  position -4.370951730440578 22.267048090332842 5.66638880553752
 }
+
 TexturedBackgroundLight {
 }
+
 TexturedBackground {
 }
+
 TexturedBackgroundLight {
 }
 UnevenTerrain {
   rotation 0 0 1 1.0472
 }
+
 Husky {
-  translation -0.53 15.3 3.81
-  rotation 7.851293122126192e-08 0.7071072811865674 0.7071062811861697 -3.1415853071795863
-  cameraSlot [
-    Astra {
-      translation 0.25400901864516623 -0.22182634871107076 -0.1080617229275962
-      rotation 0.6591409475498474 -0.33490497335044783 -0.6733289464208598 0.4801553071795873
-      name "camera"
-    }
-  ]
+  translation -0.87 15.3 3.81
+  rotation 0.9999999999865259 5.1899099999300706e-06 -1.158289999984393e-07 1.57079
+  #cameraSlot [
+  #  Astra {
+  #    translation -0.412909 0.0212666 -0.253305
+  #    rotation 0.20911898773370788 0.1367029919814128 -0.9682879432031357 -2.82
+  #    name "camera"
+  #  }
+  #]
 }
 PottedTree {
   translation 7.5 -16 1.6

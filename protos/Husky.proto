@@ -2,15 +2,15 @@
 # License:
 # Documentation
 
-EXTERNPROTO "./Astra.proto"
+#EXTERNPROTO "./Astra.proto"
 
 PROTO Husky [
-    field SFVec3f       translation     0 0 0
-    field SFRotation    rotation        0 0 1 0
-    field SFString      name            "husky"
+    field SFVec3f       translation     0 0 0.03
+    field SFRotation    rotation        0 1 0 0
+    field SFString      name            "shadow" # Husky
     field SFString      controller      "<extern>"
-    field  MFNode      cameraSlot      [ Astra { name "camera" } ] # Extends the robot with an Astra RGBD camera.
-    #field SFBool        supervisor       TRUE
+    #field  MFNode       cameraSlot      [ Astra { name "camera" } ] # Extends the robot with an Astra RGBD camera.
+    #field SFBool       supervisor       TRUE
 ]
 
 {
@@ -18,37 +18,140 @@ PROTO Husky [
         translation IS translation
         rotation IS rotation
         name IS name
-        model "ROBOLAB husky"
+        model "ROBOLAB shadow"
         controller IS controller
         children [
-            # main chassis 
+            # main chassis
             CadShape { url "./meshes/husky_chassis.obj" }
+            
+            # Sensors
+            Group {
+                children [
+                    Group {
+                        children [
+                            Camera {
+                                translation -0.18 0 1.34
+                                rotation 0 0 1 -1.5707953071795862
+                                name "camera_360_2"
+                                fieldOfView 3.14
+                                width 960
+                                height 960
+                                projection "cylindrical"
+                            }
+                            Camera {
+                                translation -0.18 0 1.34
+                                rotation 0 0 -1 -1.5708053071795867
+                                name "camera_360_1"
+                                fieldOfView 3.14
+                                width 960
+                                height 960
+                                projection "cylindrical"
+                            }
+                        ]
+                    }
+                    Lidar {
+                        translation -0.17 0 1.13
+                        rotation 0 0 1 0.34
+                        name "helios"
+                        tiltAngle -0.34
+                        horizontalResolution 900
+                        fieldOfView 6.28
+                        verticalFieldOfView 3.141592653589793
+                        numberOfLayers 82
+                        maxRange 20
+                        noise 0.005
+                        defaultFrequency 20
+                    }
+                    Lidar {
+                        translation 0.4 0.235 0.0
+                        rotation 1 0 0 1.5708 
+                        children [
+                            Shape {
+                                appearance DEF BlackMetalAppearance PBRAppearance {
+                                    baseColor 0 0 0
+                                    roughness 0.5
+                                    name "BlackMetal"
+                                }
+                                geometry Cylinder {
+                                    height 0.01
+                                    radius 0.05
+                                }
+                            }
+                        ]
+                        name "bpearl"
+                        horizontalResolution 875
+                        fieldOfView 6.28
+                        verticalFieldOfView 3.141592653589793
+                        numberOfLayers 64
+                        maxRange 20
+                        noise 0.005
+                        defaultFrequency 20
+                    }
+                    Accelerometer {
+                        resolution 0.001
+                    }
+                    Gyro{}
+                    # Whit box for the ZED camera, to be replaced with the actual camera model
+                    Camera {
+                        translation -0.11 0.28 0 #.92 
+                        rotation 1 0 0 -1.57079
+                        children[
+                            RangeFinder{
+                                name "zed-ranger"
+                                fieldOfView 1.0 #make2.09
+                                width 640 #1920
+                                height 640 #1080
+                                maxRange 20
+                            }
+                            Shape {
+                                geometry Box {
+                                    size 0.04 0.17 0.03
+                                }
+                            }
+                        ]
+                        name "zed"
+                        fieldOfView 1.0 #2.09
+                        width 640
+                        height 640
+                        projection "planar"
+                    }
+                ]
+            }
+            # Camera Slot
+            #  DEF CAMERA_SLOT Pose {
+            #    translation -0.027 0.35 0.165
+            #    rotation 0 -0.75 -1 2.7
+            #    children IS cameraSlot
+            #}
+            
             # Wheels
-            # Front left wheel
-            HingeJoint {
+            DEF WHEEL1 HingeJoint {
                 jointParameters HingeJointParameters {
-                    axis 0.000000 1.000000 0.000000
-                    anchor 0.256000 0.285400 0.032820
-                    dampingConstant 0.0
-                    staticFriction 0.0
+                    #position 4267.336797181569
+                    axis 0 1 0
+                    anchor 0.256000 0.285400 0.032820 #-0.18 0.28 0.165
+                    dampingConstant 0.0 #0.5
+                    staticFriction 0.0 #0.7
                 }
                 device [
                     RotationalMotor {
-                        name "front_left_wheel"
+                        name "wheel1" #"front_left_wheel"
                         maxVelocity 100
                     }
+                    PositionSensor {
+                        name "wheel1sensor" #"front_left_wheel_sensor"
+                    }
                 ]
-                endPoint Solid {
-                    contactMaterial "wheel"
-                    translation 0.256000 0.285400 0.032820
-                    rotation 0.000 1.000 0.000 0.000
+                endPoint DEF WHEEL_SOLID Solid {
+                    translation 0 0 0 #0.256000 0.285400 0.032820 
+                    rotation 0.000000 1.000000 0.000000 0.000000
                     children [
                         CadShape { url "./meshes/husky_front_left_wheel.obj" }
+                        
                     ]
-
-                    name "front_left_wheel_link"
+                    name "wheel1" #"front_left_wheel"
                     boundingObject Transform {
-                        translation 0.000000 0.000000 0.000000
+                        translation 0.256 0.033 -0.285 #0.000000 0.000000 0.000000
                         rotation 1.000000 0.000000 0.000000 3.141591
                         children [
                             Cylinder {
@@ -58,101 +161,168 @@ PROTO Husky [
                         ]
                     }
                     physics Physics {
+                        mass 2.63700
                         density -1
-                        mass 2.637000
-                    centerOfMass [ 0.000000 0.000000 0.000000 ]
+                        centerOfMass [ 0 0 0 ]
                     }
                 }
             }
-            #HingeJoint {
-            #    jointParameters HingeJointParameters {
-            #        axis 0 1 0
-            #        anchor -0.18 0.28 0.165
-            #    }
-            #    device [ RotationalMotor { name "wheel_front_left_motor" } ]
-            #    endPoint Solid {
-            #        translation -0.18 0.28 0.165
-            #        name "wheel_front_left"
-            #        children [
-            #            CadShape { url "./meshes/husky_front_left_wheel.obj" }
-            #        ]
-            #        boundingObject Sphere {
-            #            radius 0.1
-            #        }
-            #        physics Physics {
-            #            mass 1
-            #        }
-            #    }
-            #}
+            
+            DEF WHEEL2 HingeJoint {
+                jointParameters HingeJointParameters {
+                    axis 0 1 0
+                    anchor 0.256000 -0.285400 0.032820
+                    dampingConstant 0.0
+                    staticFriction 0.0
+                }
+                device [
+                    RotationalMotor {
+                        name "wheel2" #"front_right_motor"
+                        maxVelocity 100
+                    }
+                    PositionSensor {
+                        name "wheel2sensor" #"front_right_wheel_sensor"
+                    }
+                ]
+                endPoint Solid {
+                    translation 0 0 0 #0.256000 -0.285400 0.032820 #
+                    rotation 0.000000 1.000000 0.000000 0.000000
+                    children [
+                        CadShape { url "./meshes/husky_front_right_wheel.obj" }
+                    ]
+                    name "wheel2" #"front_right_wheel"
+                    boundingObject Transform {
+                        translation 0.256 0.033 0.285 #0.000000 0.000000 0.000000
+                        rotation 1.000000 0.000000 0.000000 3.141591
+                        children [
+                            Cylinder {
+                                radius 0.1651
+                                height 0.1143
+                            }
+                        ]
+                    }
+                    physics Physics {
+                        mass 2.63700
+                        density -1
+                        centerOfMass [ 0 0 0 ]
+                    }
+                }
+            }
+            DEF WHEEL3 HingeJoint {
+                jointParameters HingeJointParameters {
+                    axis 0 1 0
+                    anchor -0.256000 -0.285400 0.032820 #0.18 -0.28 0.165
+                    dampingConstant 0.5
+                    staticFriction 0.7
+                }
+                device [
+                    RotationalMotor {
+                        name "wheel3" #"rear_right_motor"
+                        maxVelocity 100
+                    }
+                    PositionSensor {
+                        name "wheel3sensor" #"rear_right_wheel_sensor"
+                    }
+                ]
+                endPoint Solid {
+                    translation 0 0 0 #-0.256000 -0.285400 0.032820 # -0.00 0.0 0.0
+                    rotation 0.000000 1.000000 0.000000 0.000000
+                    children [
+                        CadShape { url "./meshes/husky_rear_right_wheel.obj" }  
+                    ]
+                    name "wheel3" #"rear_right_wheel"
+                    boundingObject Transform {
+                        translation -0.256 0.033 0.285 #0.000000 0.000000 0.000000
+                        rotation 1.000000 0.000000 0.000000 3.141591
+                        children [
+                            Cylinder {
+                                radius 0.1651
+                                height 0.1143
+                            }
+                        ]
+                    }
+                    physics Physics {
+                        mass 2.63700
+                        density -1
+                        centerOfMass [ 0 0 0 ]
+                    }
+                }
+            }
 
-            # Sensors
-            Group {
-                children [
-                    Camera {
-                        translation -0.18 0 1.34
-                        rotation 0 0 1 -1.5707953071795862
-                        name "camera_360_2"
-                        fieldOfView 3.14
-                        width 960
-                        height 960
-                        projection "cylindrical"
+            DEF WHEEL4 HingeJoint {
+                jointParameters HingeJointParameters {
+                    axis 0 1 0
+                    anchor -0.256000 0.285400 0.032820 #0.18 0.28 0.165
+                    dampingConstant 0.5
+                    staticFriction 0.7
+                }
+                device [
+                    RotationalMotor {
+                        name "wheel4" #"rear_left_motor"
+                        maxVelocity 100
                     }
-                    Camera {
-                        translation -0.18 0 1.34
-                        rotation 0 0 -1 -1.5708053071795867
-                        name "camera_360_1"
-                        fieldOfView 3.14
-                        width 960
-                        height 960
-                        projection "cylindrical"
+                    PositionSensor {
+                        name "wheel4sensor" #"rear_left_wheel_sensor"
                     }
                 ]
-            }
-            # Camera Slot
-            DEF CAMERA_SLOT Pose {
-                translation -0.027 0.35 0.165
-                rotation 0 -0.75 -1 2.7
-                children IS cameraSlot
-            }
-            # Lidar 1
-            Lidar {
-                translation -0.17 0 1.13
-                rotation 0 0 1 0.34
-                name "helios"
-                tiltAngle -0.34
-                horizontalResolution 900
-                fieldOfView 6.28
-                verticalFieldOfView 3.141592653589793
-                numberOfLayers 82
-                maxRange 20
-                noise 0.005
-                defaultFrequency 20
-            }
-            Lidar {
-                translation 0 0.28 0
-                rotation 1 0 0 1.5708 
-                children [
-                    Shape {
-                        appearance DEF BlackMetalAppearance PBRAppearance {
-                            baseColor 0 0 0
-                            roughness 0.5
-                            name "BlackMetal"
-                        }
-                        geometry Cylinder {
-                            height 0.01
-                            radius 0.05
-                        }
+                endPoint Solid {
+                    translation 0 0 0 #-0.256000 0.285400 0.032820
+                    rotation 0.000000 1.000000 0.000000 0.000000
+                    children [
+                        CadShape { url "./meshes/husky_rear_left_wheel.obj" }  
+                    ]
+                    name "wheel4" #"rear_left_wheel"
+                    boundingObject Transform {
+                        translation -0.256 0.033 -0.285 #0.000000 0.000000 0.000000
+                        rotation 1.000000 0.000000 0.000000 3.141591
+                        children [
+                            Cylinder {
+                                radius 0.1651
+                                height 0.1143
+                            }
+                        ]
                     }
-                ]
-                name "bpearl"
-                horizontalResolution 875
-                fieldOfView 6.28
-                verticalFieldOfView 3.141592653589793
-                numberOfLayers 64
-                maxRange 20
-                noise 0.005
-                defaultFrequency 20
+                    physics Physics {
+                        mass 2.63700
+                        density -1
+                    centerOfMass [ 0 0 0 ]
+                    }
+                }
             }
         ]
+        name "shadow"
+        description "ROBOLAB shadow"
+        #name "base_link"
+        boundingObject Group {
+            children [
+                    Transform {
+                        translation 0.000000 0.100000 -0.0
+                        rotation 1.000000 0.000000 0 1.570795
+                        children [
+                            Box {
+                                size 0.987400 0.570900 0.123750
+                            }
+                        ]
+                    }
+                    Transform {
+                        translation 0.10000 0.250000 0.0
+                        rotation 1.000000 0.000000 0.000000 1.570795
+                        children [
+                            Box {
+                                size 0.789920 0.570900 0.103750
+                            }
+                        ]
+                    }
+                ]
+        }
+        physics Physics {
+            density -1
+            mass 1.000000
+            centerOfMass [ 0.000000 0.000000 0.000000 ]
+        }
+        controller IS controller
+        supervisor TRUE
+        #linearVelocity 2.5768635962415814e-15 -4.075325935301325e-16 0
+        #angularVelocity 3.318708717389001e-16 -7.061550565025133e-16 3.5130543371496327e-15
     }
 }

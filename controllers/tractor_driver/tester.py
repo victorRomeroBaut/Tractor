@@ -66,76 +66,103 @@ def create_mesh(params, color):
     mesh.compute_vertex_normals()
     return mesh
 
-# --- 2. MOTOR DE INFERENCIA ACTIVA (SDF) ---
-class BrainSDF:
+
+class ActiveInferenceController:
     def __init__(self):
-        # Creencia inicial [ancho, largo, curvatura]
-        self.mu = torch.tensor([0.3, 1.0, 0.01], requires_grad=True, dtype=torch.float32)
-        self.optimizer = optim.Adam([self.mu], lr=0.01)
-
-    def compute_loss(self, observation_points):
-        y = torch.tensor(observation_points, dtype=torch.float32)
-        w, l, k = self.mu[0], self.mu[1], self.mu[2]
+        # --- PREFERENCIA (Lo que el robot desea ver) ---
+        # Un arco recto, centrado y estable
+        self.preferred_mu = torch.tensor([0.51, 2.8, 0.0], dtype=torch.float32)
         
-        # SDF simplificada para el arco
-        R_c = 1.0 / (k + 1e-6)
-        dx = y[:, 0]
-        dy = y[:, 1] - R_c
-        dist_to_center = torch.sqrt(dx**2 + dy**2)
-        
-        # Error radial (Ancho)
-        err_radial = torch.mean((dist_to_center - torch.abs(R_c)).abs() - w/2).pow(2)
-        # Error de longitud (simplificado)
-        loss = err_radial + 0.1 * ((w - 0.5)**2) # Prior: el robot prefiere ancho de 0.5
-        return loss
+        # --- ACCIÓN (Lo que optimizamos: Pose Relativa) ---
+        # [x, y, theta]
+        self.action = torch.tensor([0.0, 0.0, 0.0], requires_grad=True, dtype=torch.float32)
+        # Aumentamos el Learning Rate para que el movimiento sea más agresivo
+        self.optimizer = optim.Adam([self.action], lr=0.005)
 
-    def update(self, points):
+    def get_loss(self, world_points):
+        # 1. Aplicar la ACCIÓN a los puntos del mundo
+        x, y, theta = self.action[0], self.action[1], self.action[2]
+        
+        # Matriz de rotación 2D
+        cos_t = torch.cos(theta)
+        sin_t = torch.sin(theta)
+        
+        # Transformación: Primero rotamos, luego trasladamos (Sistema coordenadas Robot)
+        # x' = x*cos + y*sin - tx
+        # y' = -x*sin + y*cos - ty
+        p_x = world_points[:, 0] * cos_t + world_points[:, 1] * sin_t - x
+        p_y = -world_points[:, 0] * sin_t + world_points[:, 1] * cos_t - y
+        
+        # 2. SDF del Arco Deseado (Recto)
+        w_p, l_p, k_p = self.preferred_mu
+        
+        # Error lateral (distancia al eje Y central)
+        err_x = torch.abs(p_x) - (w_p / 2.0)
+        err_x = torch.clamp(err_x, min=0)
+        
+        # Error longitudinal (distancia al segmento de longitud L)
+        err_y = torch.abs(p_y - l_p/2.0) - (l_p / 2.0)
+        err_y = torch.clamp(err_y, min=0)
+        
+        # Error total (Distancia Euclidiana al sólido)
+        # Usamos una suma simple para que el gradiente sea más lineal y no se desvanezca
+        dist_sq = err_x + err_y 
+        
+        return torch.mean(dist_sq)
+
+    def step(self, points):
         self.optimizer.zero_grad()
-        loss = self.compute_loss(points)
+        loss = self.get_loss(torch.tensor(points, dtype=torch.float32))
         loss.backward()
         self.optimizer.step()
-        return self.mu.detach().numpy().copy()
+        return self.action.detach().numpy()
 
-# --- 3. SIMULACIÓN EN TIEMPO REAL ---
 
-# Inicializar Visualizador
+
+# 2. El Controlador (Active Inference)
+controller = ActiveInferenceController()
+
+# 3. Visualización
 vis = o3d.visualization.Visualizer()
-vis.create_window(window_name="Active Inference: Belief vs World", width=1024, height=768)
+vis.create_window(window_name="Active Inference: Action Control", width=800, height=600)
 
-brain = BrainSDF()
+# Mundo: Una fila desplazada 1 metro a la derecha y rotada
+world_params = [0.5, 3.0, 0.0] 
+world_mesh = create_mesh(world_params, [0.2, 0.8, 0.2])
+world_mesh.translate([1.0, 0.5, 0]) # Desplazamiento inicial real
+world_mesh.rotate(world_mesh.get_rotation_matrix_from_xyz((0, 0, 0.4)), center=(0,0,0))
 
-# Parámetros del Mundo Real (van a cambiar)
-world_params = [0.6, 2.0, 0.1] 
-world_mesh = create_mesh(world_params, [0.2, 0.8, 0.2]) # Verde
-belief_mesh = create_mesh(brain.mu.detach().numpy(), [0.2, 0.2, 0.8]) # Azul
+# Creencia/Deseo: Arco fijo en el centro (Azul)
+controller = ActiveInferenceController()
+target_mesh = create_mesh(controller.preferred_mu.tolist(), [0.1, 0.1, 0.9])
 
 vis.add_geometry(world_mesh)
-vis.add_geometry(belief_mesh)
+vis.add_geometry(target_mesh)
 
-# Bucle de simulación
-for i in range(10000):
-    # A. El MUNDO cambia (La curva se vuelve más cerrada con el tiempo)
-    world_params[2] += 0.0005 * np.sin(i / 50.0) 
-    new_world = create_mesh(world_params, [0.2, 0.8, 0.2])
-    world_mesh.vertices = new_world.vertices
+for i in range(15000):
+    # 1. El robot "mira" el mundo
+    obs_points = np.asarray(world_mesh.sample_points_uniformly(300).points)[:, :2]
     
-    # B. PERCEPCIÓN: El robot "observa" puntos del mundo
-    obs_points = np.asarray(new_world.sample_points_uniformly(200).points)
+    # 2. Inferencia Activa: ¿Qué acción reduce la sorpresa?
+    # Obtenemos la pose que el robot DEBERÍA tener para que el mundo encaje
+    pose = controller.step(obs_points)
     
-    # C. INFERENCIA: El cerebro actualiza su creencia (mu) para alinearse
-    current_belief = brain.update(obs_points)
+    # 3. Aplicar movimiento al mundo (Simulando que el robot se mueve hacia la pose)
+    # En un robot real, aquí enviarías comandos de velocidad. 
+    # Aquí movemos la malla del mundo en sentido inverso al movimiento del robot.
+    tx, ty, tr = pose * 0.05 # Movemos un pequeño paso hacia la solución
     
-    # D. ACTUALIZAR MODELO INTERNO:
-    new_belief = create_mesh(current_belief, [0.2, 0.2, 0.8])
-    belief_mesh.vertices = new_belief.vertices
+    world_mesh.translate([-tx, -ty, 0])
+    R = world_mesh.get_rotation_matrix_from_xyz((0, 0, -tr))
+    world_mesh.rotate(R, center=(0,0,0))
     
-    # E. RENDERIZADO
-    vis.update_geometry(world_mesh)
-    vis.update_geometry(belief_mesh)
-    vis.poll_events()
-    vis.update_renderer()
+    # Resetear la acción interna para que la optimización sea incremental
+    with torch.no_grad():
+        controller.action.zero_()
 
-    if i % 100 == 0:
-        print(f"Mundo K: {world_params[2]:.3f} | Creencia K: {current_belief[2]:.3f}")
+    if i % 10 == 0:
+        vis.update_geometry(world_mesh)
+        vis.poll_events()
+        vis.update_renderer()
 
 vis.destroy_window()

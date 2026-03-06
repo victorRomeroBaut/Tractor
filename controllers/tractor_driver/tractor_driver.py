@@ -55,8 +55,10 @@ def get_pcd(rgb_cam, depth_cam, height: int, width: int, focal_length, cx, cy, v
     return pcd, ground_cloud, crop_cloud
 
 
+
+"""
 def main():
-    """Main tractor driver controller loop."""
+    # Main tractor driver controller loop.
     
     # 1. Initialize the Robot
     robot = Robot()
@@ -160,6 +162,47 @@ def main():
         #motors[2].setVelocity(speed_l) # Rear Left max(min(speed_l, 10), -10)
         #motors[1].setVelocity(speed_r) # Front Right max(min(speed_r, 10), -10)
         #motors[3].setVelocity(speed_r) # Rear Right max(min(speed_r, 10), -10)
+        """
+
+def main():
+    robot = Robot()
+    timestep = int(robot.getBasicTimeStep())
+    # Get motors
+    motors = [
+        robot.getDevice("wheel1"),
+        robot.getDevice("wheel2"),
+        robot.getDevice("wheel3"),
+        robot.getDevice("wheel4")
+    ]
+    
+    # Configure motors for velocity control
+    for motor in motors:
+        if motor:
+            motor.setPosition(float('inf'))  # Enable velocity control mode
+            motor.setVelocity(0.0)
+    
+    # Get sensors
+    wheel_sensors = [robot.getDevice(f"wheel{i}sensor") for i in range(1, 5)]
+    lidar = robot.getDevice("helios")
+    camera = robot.getDevice("zed")
+    
+    # Enable position sensors
+    for sensor in wheel_sensors:
+        if sensor:
+            sensor.enable(timestep)
+    
+    # Enable camera
+    if camera:
+        camera.enable(timestep)
+
+    while robot.step(timestep) != -1:
+        # Control motors - set velocity (rad/s)
+        # Example: move forward at 2.0 rad/s
+        for motor in motors:
+            motor.setVelocity(2.0)  # Speed in rad/s
+        # Read sensors
+        for sensor in wheel_sensors:
+            print(f"Wheel position: {sensor.getValue()}")
 
 if __name__ == '__main__':
     main()
