@@ -5,12 +5,12 @@
 #EXTERNPROTO "./Astra.proto"
 
 PROTO Husky [
-    field SFVec3f       translation     0 0 0.03
+    field SFVec3f       translation     0 0 0.0
     field SFRotation    rotation        0 1 0 0
     field SFString      name            "shadow" # Husky
     field SFString      controller      "<extern>"
     #field  MFNode       cameraSlot      [ Astra { name "camera" } ] # Extends the robot with an Astra RGBD camera.
-    #field SFBool       supervisor       TRUE
+    #field SFBool       supervisor       TRUE1111
 ]
 
 {
@@ -93,8 +93,8 @@ PROTO Husky [
                     Gyro{}
                     # Whit box for the ZED camera, to be replaced with the actual camera model
                     Camera {
-                        translation -0.11 0.28 0 #.92 
-                        rotation 1 0 0 -1.57079
+                        translation -0.2 0.28 0 #.92 
+                        rotation 1 0 -1 1.57076 #1.57079
                         children[
                             RangeFinder{
                                 name "zed-ranger"
@@ -128,10 +128,10 @@ PROTO Husky [
             DEF WHEEL1 HingeJoint {
                 jointParameters HingeJointParameters {
                     #position 4267.336797181569
-                    axis 0 1 0
-                    anchor 0.256000 0.285400 0.032820 #-0.18 0.28 0.165
-                    dampingConstant 0.0 #0.5
-                    staticFriction 0.0 #0.7
+                    axis 0 0 1 # 0 1 0
+                    anchor 0.2560 0.033 -0.2850 #0.256000 0.285400 0.032820 
+                    dampingConstant 0.0 # 0.5
+                    staticFriction 0.0 # 0.7
                 }
                 device [
                     RotationalMotor {
@@ -143,7 +143,8 @@ PROTO Husky [
                     }
                 ]
                 endPoint DEF WHEEL_SOLID Solid {
-                    translation 0 0 0 #0.256000 0.285400 0.032820 
+                    contactMaterial "wheel"
+                    translation 0 0 0 # 0.256000 0.285400 0.032820
                     rotation 0.000000 1.000000 0.000000 0.000000
                     children [
                         CadShape { url "./meshes/husky_front_left_wheel.obj" }
@@ -151,8 +152,8 @@ PROTO Husky [
                     ]
                     name "wheel1" #"front_left_wheel"
                     boundingObject Transform {
-                        translation 0.256 0.033 -0.285 #0.000000 0.000000 0.000000
-                        rotation 1.000000 0.000000 0.000000 3.141591
+                        translation 0.25600 0.033 -0.2850 # 0.256 0.033 -0.285
+                        rotation 0.000000 0.000000 1.000000 3.141591 # 1.000000 0.000000 0.000000 3.141591
                         children [
                             Cylinder {
                                 radius 0.1651
@@ -170,8 +171,8 @@ PROTO Husky [
             
             DEF WHEEL2 HingeJoint {
                 jointParameters HingeJointParameters {
-                    axis 0 1 0
-                    anchor 0.256000 -0.285400 0.032820
+                    axis 0 0 1 #0 1 0
+                    anchor 0.2560 0.033 0.2850 # 0.256000 -0.285400 0.032820
                     dampingConstant 0.0
                     staticFriction 0.0
                 }
@@ -185,15 +186,16 @@ PROTO Husky [
                     }
                 ]
                 endPoint Solid {
-                    translation 0 0 0 #0.256000 -0.285400 0.032820 #
-                    rotation 0.000000 1.000000 0.000000 0.000000
+                    contactMaterial "wheel"
+                    translation 0 0 0 # 0.256000 -0.285400 0.032820
+                    rotation 0.000000 1.000000 0.000000 0.000000 #0.000000 1.000000 0.000000 0.000000
                     children [
                         CadShape { url "./meshes/husky_front_right_wheel.obj" }
                     ]
                     name "wheel2" #"front_right_wheel"
                     boundingObject Transform {
-                        translation 0.256 0.033 0.285 #0.000000 0.000000 0.000000
-                        rotation 1.000000 0.000000 0.000000 3.141591
+                        translation 0.2560 0.033 0.2850 # 0.000000 0.000000 0.000000 
+                        rotation 0.000000 1.000000 0.000000 3.141591 # 1.000000 0.000000 0.000000 3.141591
                         children [
                             Cylinder {
                                 radius 0.1651
@@ -210,10 +212,10 @@ PROTO Husky [
             }
             DEF WHEEL3 HingeJoint {
                 jointParameters HingeJointParameters {
-                    axis 0 1 0
-                    anchor -0.256000 -0.285400 0.032820 #0.18 -0.28 0.165
-                    dampingConstant 0.5
-                    staticFriction 0.7
+                    axis 0 0 1 # 0 1 0
+                    anchor -0.2560 0.033 0.285 # -0.256000 -0.285400 0.032820 #0.18 -0.28 0.165
+                    dampingConstant 0.0 #0.5
+                    staticFriction 0.0 #0.7
                 }
                 device [
                     RotationalMotor {
@@ -225,15 +227,16 @@ PROTO Husky [
                     }
                 ]
                 endPoint Solid {
-                    translation 0 0 0 #-0.256000 -0.285400 0.032820 # -0.00 0.0 0.0
-                    rotation 0.000000 1.000000 0.000000 0.000000
+                    contactMaterial "wheel"
+                    translation 0 0 0 # -0.256000 -0.285400 0.032820
+                    rotation 0.000000 1.000000 0.000000 0.000000 #0.000000 1.000000 0.000000 0.000000
                     children [
                         CadShape { url "./meshes/husky_rear_right_wheel.obj" }  
                     ]
                     name "wheel3" #"rear_right_wheel"
                     boundingObject Transform {
-                        translation -0.256 0.033 0.285 #0.000000 0.000000 0.000000
-                        rotation 1.000000 0.000000 0.000000 3.141591
+                        translation -0.256 0.033 0.285 # 0.000000 0.000000 0.000000
+                        rotation 0.000000 1.000000 0.000000 3.141591 #1.000000 0.000000 0.000000 3.141591
                         children [
                             Cylinder {
                                 radius 0.1651
@@ -251,10 +254,10 @@ PROTO Husky [
 
             DEF WHEEL4 HingeJoint {
                 jointParameters HingeJointParameters {
-                    axis 0 1 0
-                    anchor -0.256000 0.285400 0.032820 #0.18 0.28 0.165
-                    dampingConstant 0.5
-                    staticFriction 0.7
+                    axis 0 0 1 # 0 1 0
+                    anchor -0.256 0.033 -0.285 # -0.256000 0.285400 0.032820 
+                    dampingConstant 0.0 #0.5
+                    staticFriction 0.0 # 0.7
                 }
                 device [
                     RotationalMotor {
@@ -266,15 +269,16 @@ PROTO Husky [
                     }
                 ]
                 endPoint Solid {
+                    contactMaterial "wheel"
                     translation 0 0 0 #-0.256000 0.285400 0.032820
-                    rotation 0.000000 1.000000 0.000000 0.000000
+                    rotation 0.000000 1.000000 0.000000 0.000000 # 0.000000 1.000000 0.000000 0.000000
                     children [
                         CadShape { url "./meshes/husky_rear_left_wheel.obj" }  
                     ]
                     name "wheel4" #"rear_left_wheel"
                     boundingObject Transform {
-                        translation -0.256 0.033 -0.285 #0.000000 0.000000 0.000000
-                        rotation 1.000000 0.000000 0.000000 3.141591
+                        translation -0.256 0.033 -0.285 # 0.000000 0.000000 0.000000
+                        rotation 0.000000 1.000000 0.000000 3.141591 # 1.000000 0.000000 0.000000 3.141591
                         children [
                             Cylinder {
                                 radius 0.1651
@@ -296,8 +300,8 @@ PROTO Husky [
         boundingObject Group {
             children [
                     Transform {
-                        translation 0.000000 0.100000 -0.0
-                        rotation 1.000000 0.000000 0 1.570795
+                        translation 0.0000 0.1000 -0.0
+                        rotation 1.000000 0.0000 0.0000 1.570795
                         children [
                             Box {
                                 size 0.987400 0.570900 0.123750
@@ -305,8 +309,8 @@ PROTO Husky [
                         ]
                     }
                     Transform {
-                        translation 0.10000 0.250000 0.0
-                        rotation 1.000000 0.000000 0.000000 1.570795
+                        translation 0.080 0.2500 0.0
+                        rotation 1.0000 0.0000 0.0000 1.570795
                         children [
                             Box {
                                 size 0.789920 0.570900 0.103750

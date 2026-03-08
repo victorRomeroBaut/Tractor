@@ -7,7 +7,7 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/project
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/plants/protos/PottedTree.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/plants/protos/FlowerPot.proto"
 EXTERNPROTO "../protos/Husky.proto"
-EXTERNPROTO "../protos/Astra.proto"
+EXTERNPROTO "../protos/Pioneer2.proto"
 
 WorldInfo {
   info [
@@ -16,34 +16,25 @@ WorldInfo {
   title "ROBOLAB shadow"
   basicTimeStep 16
 }
-
 Viewpoint {
-  orientation 0.10088223673443704 0.07659988407165583 -0.9919451759405183 1.153617053139718
-  position -4.370951730440578 22.267048090332842 5.66638880553752
+  orientation -0.023938019370568584 0.5055073958029466 0.862490141402867 0.5265857370552389
+  position -5.374883485203902 -1.5678994283660463 5.330261263877585
 }
-
 TexturedBackgroundLight {
 }
-
 TexturedBackground {
 }
-
 TexturedBackgroundLight {
 }
 UnevenTerrain {
   rotation 0 0 1 1.0472
 }
-
+Pioneer2 {
+  translation 0 0 3.12
+}
 Husky {
-  translation -0.87 15.3 3.81
-  rotation 0.9999999999865259 5.1899099999300706e-06 -1.158289999984393e-07 1.57079
-  #cameraSlot [
-  #  Astra {
-  #    translation -0.412909 0.0212666 -0.253305
-  #    rotation 0.20911898773370788 0.1367029919814128 -0.9682879432031357 -2.82
-  #    name "camera"
-  #  }
-  #]
+  translation -0.440913 15.1802 3.83976
+  rotation -0.024183463964718696 0.6889674778639726 0.7243886902184651 3.1169386908225505
 }
 PottedTree {
   translation 7.5 -16 1.6
