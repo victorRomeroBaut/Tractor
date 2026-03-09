@@ -8,7 +8,7 @@ PROTO Husky [
     field SFVec3f       translation     0 0 0.0
     field SFRotation    rotation        0 1 0 0
     field SFString      name            "shadow" # Husky
-    field SFString      controller      "<extern>"
+    field SFString      controller      "<ros2>" # "<extern>"
     #field  MFNode       cameraSlot      [ Astra { name "camera" } ] # Extends the robot with an Astra RGBD camera.
     #field SFBool       supervisor       TRUE1111
 ]
@@ -63,7 +63,7 @@ PROTO Husky [
                         defaultFrequency 20
                     }
                     Lidar {
-                        translation 0.4 0.235 0.0
+                        translation 0.1 0.26 -0.0
                         rotation 1 0 0 1.5708 
                         children [
                             Shape {
@@ -94,7 +94,7 @@ PROTO Husky [
                     # Whit box for the ZED camera, to be replaced with the actual camera model
                     Camera {
                         translation -0.2 0.28 0 #.92 
-                        rotation 1 0 -1 1.57076 #1.57079
+                        rotation 1 0 0 -1.57076 #1.57079
                         children[
                             RangeFinder{
                                 name "zed-ranger"

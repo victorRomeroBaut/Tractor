@@ -7,7 +7,6 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/project
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/plants/protos/PottedTree.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/plants/protos/FlowerPot.proto"
 EXTERNPROTO "../protos/Husky.proto"
-EXTERNPROTO "../protos/Pioneer2.proto"
 
 WorldInfo {
   info [
@@ -17,8 +16,8 @@ WorldInfo {
   basicTimeStep 16
 }
 Viewpoint {
-  orientation -0.023938019370568584 0.5055073958029466 0.862490141402867 0.5265857370552389
-  position -5.374883485203902 -1.5678994283660463 5.330261263877585
+  orientation -0.2545779133691895 -0.39788354808823867 0.8814072657888088 5.24696065046831
+  position -2.727787371783764 16.449982309887233 6.192389749838668
 }
 TexturedBackgroundLight {
 }
@@ -29,10 +28,7 @@ TexturedBackgroundLight {
 UnevenTerrain {
   rotation 0 0 1 1.0472
 }
-Pioneer2 {
-  translation 0 0 3.12
-}
-Husky {
+DEF shadow Husky {
   translation -0.440913 15.1802 3.83976
   rotation -0.024183463964718696 0.6889674778639726 0.7243886902184651 3.1169386908225505
 }

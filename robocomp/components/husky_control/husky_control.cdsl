@@ -1,0 +1,13 @@
+import "Lidar3D.idsl";
+import "CameraRGBDSimple.idsl";
+import "OmniRobot.idsl";
+
+Component husky_control
+{
+    Communications
+    {
+        requires Lidar3D, CameraRGBDSimple, OmniRobot;
+    };
+    language python;
+};
+
