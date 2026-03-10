@@ -26,6 +26,7 @@ from genericworker import *
 import interfaces as ifaces
 import cv2 as cv
 import numpy as np
+import open3d as o3d
 
 sys.path.append('/opt/robocomp/lib')
 console = Console(highlight=False)
@@ -35,6 +36,10 @@ class SpecificWorker(GenericWorker):
     def __init__(self, proxy_map, configData, startup_check=False):
         super(SpecificWorker, self).__init__(proxy_map, configData)
         self.Period = configData["Period"]["Compute"]
+        #? Robot constants
+        self.steer_sensitivity = 40.0 #
+        self.safe_dist = 0.25 #
+        self.base_speed = 2.0 #
         if startup_check:
             self.startup_check()
         else:
@@ -47,14 +52,17 @@ class SpecificWorker(GenericWorker):
 
     @QtCore.Slot()
     def compute(self):
-        self.image = self.camerargbdsimple_proxy.getImage("camera")
+        #* Main loop of the component 
+        self.camera = self.camerargbdsimple_proxy.getImage("camera")
         self.omnirobot_proxy.setSpeedBase(0.0, 20.0, 0.0)
-        
-        if self.image and self.image.image:
-            cvimage = np.frombuffer(self.image.image, np.uint8).reshape(self.image.height, self.image.width, 3)
+        if self.camera and self.camera.image:
+            cvimage = np.frombuffer(self.camera.image, np.uint8).reshape(self.camera.height, self.camera.width, 3)[:,:,::-1] / 225.0
+
             cv.imshow("CameraRGBDSimple", cvimage)
             cv.waitKey(1)
+        #? Compute voxels
         return True
+    
 
     def startup_check(self):
         print(f"Testing RoboCompCameraRGBDSimple.Point3D from ifaces.RoboCompCameraRGBDSimple")

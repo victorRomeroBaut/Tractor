@@ -8,7 +8,7 @@ PROTO Husky [
     field SFVec3f       translation     0 0 0.0
     field SFRotation    rotation        0 1 0 0
     field SFString      name            "shadow" # Husky
-    field SFString      controller      "<ros2>" # "<extern>"
+    field SFString      controller      "<extern>" # "<ros2>"
     #field  MFNode       cameraSlot      [ Astra { name "camera" } ] # Extends the robot with an Astra RGBD camera.
     #field SFBool       supervisor       TRUE1111
 ]
@@ -92,30 +92,59 @@ PROTO Husky [
                     }
                     Gyro{}
                     # Whit box for the ZED camera, to be replaced with the actual camera model
+                    #Camera {
+                    #    translation -0.2 0.28 0 
+                    #    rotation 1 0 0 -1.5708
+                    #    children[
+                    #        RangeFinder{
+                    #            name "zed-ranger"
+                    #            fieldOfView 1.0 #make2.09
+                    #            width 640 #1920
+                    #            height 640 #1080
+                    #            maxRange 20
+                    #        }
+                    #        Shape {
+                    #            geometry Box {
+                    #                size 0.04 0.17 0.03
+                    #            }
+                    #        }
+                    #    ]
+                    #    name "zed"
+                    #    fieldOfView 1.0 #2.09
+                    #    width 640
+                    #    height 640
+                    #    projection "planar"
+                    #}
+                ]
+            }
+            Solid {
+                translation -0.3 -0.05 -0.00
+                rotation 0 1 0 3.14159
+                children [
                     Camera {
-                        translation -0.2 0.28 0 #.92 
-                        rotation 1 0 0 -1.57076 #1.57079
+                        translation 0.0 0.28 0 
+                        rotation 1 0 0 -1.5708
                         children[
                             RangeFinder{
                                 name "zed-ranger"
-                                fieldOfView 1.0 #make2.09
-                                width 640 #1920
-                                height 640 #1080
-                                maxRange 20
-                            }
-                            Shape {
-                                geometry Box {
-                                    size 0.04 0.17 0.03
+                                    fieldOfView 1.0 #make2.09
+                                    width 640 #1920
+                                    height 640 #1080
+                                    maxRange 20
                                 }
-                            }
-                        ]
-                        name "zed"
-                        fieldOfView 1.0 #2.09
-                        width 640
-                        height 640
-                        projection "planar"
-                    }
-                ]
+                                Shape {
+                                    geometry Box {
+                                        size 0.04 0.17 0.03
+                                    }
+                                }
+                            ]
+                            name "zed"
+                            fieldOfView 1.0 #2.09
+                            width 640
+                            height 640
+                            projection "planar"
+                        }
+                    ]
             }
             # Camera Slot
             #  DEF CAMERA_SLOT Pose {
