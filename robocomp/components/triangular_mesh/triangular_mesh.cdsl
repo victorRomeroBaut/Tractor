@@ -1,0 +1,13 @@
+import "Lidar3D.idsl";
+import "CameraRGBDSimple.idsl";
+import "OmniRobot.idsl";
+
+Component triangular_mesh
+{
+    Communications
+    {
+        requires Lidar3D, CameraRGBDSimple, OmniRobot;
+    };
+    language Cpp11;
+};
+

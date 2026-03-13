@@ -55,7 +55,6 @@ def get_pcd(rgb_cam, depth_cam, height: int, width: int, focal_length, cx, cy, v
     return pcd, ground_cloud, crop_cloud
 
 
-
 """
 def main():
     # Main tractor driver controller loop.
