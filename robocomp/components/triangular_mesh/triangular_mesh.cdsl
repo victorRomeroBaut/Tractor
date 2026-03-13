@@ -9,5 +9,6 @@ Component triangular_mesh
         requires Lidar3D, CameraRGBDSimple, OmniRobot;
     };
     language Cpp11;
+	gui Qt(QWidget);
 };
 

@@ -20,7 +20,7 @@
 /**
 * \brief Default constructor
 */
-GenericWorker::GenericWorker(const ConfigLoader& configLoader, TuplePrx tprx) : QObject()
+GenericWorker::GenericWorker(const ConfigLoader& configLoader, TuplePrx tprx) : Ui_guiDlg()
 {
 
 	this->configLoader = configLoader;
@@ -50,6 +50,11 @@ GenericWorker::GenericWorker(const ConfigLoader& configLoader, TuplePrx tprx) : 
 
 	connect(&hibernationChecker, SIGNAL(timeout()), this, SLOT(hibernationCheck()));
 
+
+	#ifdef USE_QTGUI
+		setupUi(this);
+		show();
+	#endif
 
 }
 

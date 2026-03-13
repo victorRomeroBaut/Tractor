@@ -83,7 +83,7 @@
 #include <Lidar3D.h>
 #include <OmniRobot.h>
 
-//#define USE_QTGUI
+#define USE_QTGUI
 
 #define PROGRAM_NAME    "triangular_mesh"
 #define SERVER_FULL_NAME   "RoboComp triangular_mesh::triangular_mesh"
