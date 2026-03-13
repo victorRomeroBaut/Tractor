@@ -91,9 +91,9 @@
 
 template <typename ProxyType, typename ProxyPointer>
 void require(const Ice::CommunicatorPtr& communicator,
-             const std::string& proxyConfig, 
-             const std::string& proxyName,
-             ProxyPointer& proxy)
+            const std::string& proxyConfig, 
+            const std::string& proxyName,
+            ProxyPointer& proxy)
 {
     try
     {
@@ -176,14 +176,13 @@ int triangular_mesh::run(int argc, char* argv[])
 	RoboCompLidar3D::Lidar3DPrxPtr lidar3d_proxy;
 	RoboCompOmniRobot::OmniRobotPrxPtr omnirobot_proxy;
 
-
 	//Require code
 	require<RoboCompCameraRGBDSimple::CameraRGBDSimplePrx, RoboCompCameraRGBDSimple::CameraRGBDSimplePrxPtr>(communicator(),
-	                    configLoader.get<std::string>("Proxies.CameraRGBDSimple"), "CameraRGBDSimpleProxy", camerargbdsimple_proxy);
+						configLoader.get<std::string>("Proxies.CameraRGBDSimple"), "CameraRGBDSimpleProxy", camerargbdsimple_proxy);
 	require<RoboCompLidar3D::Lidar3DPrx, RoboCompLidar3D::Lidar3DPrxPtr>(communicator(),
-	                    configLoader.get<std::string>("Proxies.Lidar3D"), "Lidar3DProxy", lidar3d_proxy);
+						configLoader.get<std::string>("Proxies.Lidar3D"), "Lidar3DProxy", lidar3d_proxy);
 	require<RoboCompOmniRobot::OmniRobotPrx, RoboCompOmniRobot::OmniRobotPrxPtr>(communicator(),
-	                    configLoader.get<std::string>("Proxies.OmniRobot"), "OmniRobotProxy", omnirobot_proxy);
+						configLoader.get<std::string>("Proxies.OmniRobot"), "OmniRobotProxy", omnirobot_proxy);
 
 	tprx = std::make_tuple(camerargbdsimple_proxy,lidar3d_proxy,omnirobot_proxy);
 	SpecificWorker *worker = new SpecificWorker(this->configLoader, tprx, startup_check_flag);
@@ -234,7 +233,6 @@ int main(int argc, char* argv[])
 	QString prefix("");
 	if (argc > 1)
 	{
-
 		// Search in argument list for arguments
 		QString startup = QString("--startup-check");
 		QString initIC = QString("--Ice.Config=");

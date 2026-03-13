@@ -1,11 +1,10 @@
 # Proxies for required interfaces
-Proxies.CameraRGBDSimple = "camerargbdsimple:tcp -h localhost -p 0"
-Proxies.Lidar3D = "lidar3d:tcp -h localhost -p 0"
-Proxies.OmniRobot = "omnirobot:tcp -h localhost -p 0"
+Proxies.CameraRGBDSimple = "camerargbdsimple:tcp -h localhost -p 10096"
+Proxies.Lidar3D = "lidar3d:tcp -h localhost -p 11989"
+Proxies.OmniRobot = "omnirobot:tcp -h localhost -p 10004"
 
 
-
-Period.Compute = 100
+Period.Compute = 16
 Period.Emergency = 500
 
 Component.Debug.Verbose = true

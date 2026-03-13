@@ -19,14 +19,14 @@
 #    along with RoboComp.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from PySide6.QtCore import QTimer
-from PySide6.QtWidgets import QApplication
+#from PySide6.QtCore import QTimer
+#from PySide6.QtWidgets import QApplication
 from rich.console import Console
 from genericworker import *
 import interfaces as ifaces
-import cv2 as cv
+#import cv2 as cv
 import numpy as np
-import open3d as o3d
+#import open3d as o3d
 
 sys.path.append('/opt/robocomp/lib')
 console = Console(highlight=False)
@@ -53,14 +53,17 @@ class SpecificWorker(GenericWorker):
     @QtCore.Slot()
     def compute(self):
         #* Main loop of the component 
-        self.camera = self.camerargbdsimple_proxy.getImage("camera")
+        #? Robot control
         self.omnirobot_proxy.setSpeedBase(0.0, 20.0, 0.0)
-        if self.camera and self.camera.image:
-            cvimage = np.frombuffer(self.camera.image, np.uint8).reshape(self.camera.height, self.camera.width, 3)[:,:,::-1] / 225.0
+        #? Camera processing
+        self.camera = self.camerargbdsimple_proxy.getImage("camera")
+        #if self.camera and self.camera.image:
+            #cvimage = np.frombuffer(self.camera.image, np.uint8).reshape(self.camera.height, self.camera.width, 3)[:,:,::-1] / 225.0
 
-            cv.imshow("CameraRGBDSimple", cvimage)
-            cv.waitKey(1)
+            #cv.imshow("CameraRGBDSimple", cvimage)
+            #cv.waitKey(1)
         #? Compute voxels
+        
         return True
     
 

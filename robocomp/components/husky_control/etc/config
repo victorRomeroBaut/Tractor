@@ -4,7 +4,6 @@ Proxies.Lidar3D = "lidar3d:tcp -h localhost -p 11988"
 Proxies.OmniRobot = "omnirobot:tcp -h localhost -p 10004"
 
 
-
 Period.Compute = 16
 Period.Emergency = 500
 

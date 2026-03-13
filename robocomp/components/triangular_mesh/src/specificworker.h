@@ -29,6 +29,12 @@
 //#define HIBERNATION_ENABLED
 
 #include <genericworker.h>
+#include <Eigen/Core>
+#include <QMainWindow>
+#include <QLabel>
+#include "navmap/core/NavMap.hpp"
+#include "navmap/core/Geometry.hpp"
+
 
 /**
  * \brief Class SpecificWorker implements the core functionality of the component.
@@ -86,7 +92,76 @@ private:
      */
 	bool startup_check_flag;
 
-signals:
+	/**
+	 * \brief Processes camera image: converts from BGR to RGB and displays it.
+	 */
+	void processCameraImage();
+	/**
+	\brief Retrieves and processes Lidar color cloud data.
+	 */
+	void processLidarColorCloud();
+	/**
+	\brief Displays up to 100 lidar points in a 2D top-down view.
+	 */
+	void displayLidarPoints();
+	/**
+	\brief Builds a mesh from lidar point cloud data using NavMap library.
+	 */
+	void buildMeshFromLidar();
+
+	/**
+	\brief Displays the constructed mesh in 2D top-down view.
+	 */
+	void displayMesh();
+
+	/**
+	 \brief Builds a colored point cloud from RGBD camera data.
+	 */
+	void buildPointCloudFromRGBD();
+
+	/**
+	 \brief Sets camera intrinsic parameters for proper 3D-to-2D projection.
+	 \param fx Focal length in X (pixels)
+	 \param fy Focal length in Y (pixels)
+	 \param cx Principal point X (pixels)
+	 \param cy Principal point Y (pixels)
+	 \param width Image width
+	 \param height Image height
+	 */
+	void setCameraIntrinsics(float fx, float fy, float cx, float cy, int width, int height);
+
+	/**
+	 \brief Displays the colored RGBD point cloud in a Qt window with 3D visualization.
+	 */
+	void displayPointCloudQt();
+
+	/**
+	 \brief Constructs a mesh from RGBD point cloud data using NavMap library.
+	 \note The point cloud must be built first using buildPointCloudFromRGBD().
+	 */
+	void buildMeshFromRGBD();
+
+private:
+	/// NavMap mesh container
+	navmap::NavMap mesh_;
+	/// Colored point cloud from RGBD (XYZ + RGB)
+	struct ColoredPoint {
+		float x, y, z;      // Position
+		uint8_t r, g, b;    // Color (BGR from OpenCV)
+	};
+	std::vector<ColoredPoint> rgbd_point_cloud_;
+	
+	/// Camera intrinsic parameters
+	struct CameraIntrinsics {
+		float fx{320.0f};   // Focal length X (pixels)
+		float fy{320.0f};   // Focal length Y (pixels)
+		float cx{320.0f};   // Principal point X (pixels)
+		float cy{240.0f};   // Principal point Y (pixels)
+		int width{640};     // Image width
+		int height{480};    // Image height
+	} camera_intrinsics_;	
+	/// Qt window for point cloud visualization
+	QMainWindow* pointcloud_window_{nullptr};signals:
 	//void customSignal();
 };
 
