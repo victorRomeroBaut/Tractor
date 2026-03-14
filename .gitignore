@@ -5,3 +5,5 @@
 .idea/
 .DS_Store
 logs/
+robocomp/components/husky_control/build/
+robocomp/components/husky_control/bin/
