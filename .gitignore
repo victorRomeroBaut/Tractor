@@ -7,3 +7,5 @@
 logs/
 robocomp/components/husky_control/build/
 robocomp/components/husky_control/bin/
+robocomp/components/triangular_mesh/build/
+robocomp/components/triangular_mesh/bin/
